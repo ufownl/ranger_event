@@ -36,6 +36,7 @@
 #include <event/endpoint.hpp>
 #include <event/token_bucket_cfg.hpp>
 #endif	// RANGER_EVENT_INTERNAL
+#include <vector>
 
 struct bufferevent;
 struct event_base;
@@ -61,8 +62,8 @@ namespace ranger { namespace event {
 		struct filter_handler
 		{
 			virtual ~filter_handler() {}
-			virtual void handle_input(buffer&&, buffer&&) = 0;
-			virtual void handle_output(buffer&&, buffer&&) {}
+			virtual bool handle_input(buffer&&, buffer&&) = 0;
+			virtual bool handle_output(buffer&&, buffer&&) = 0;
 		};
 
 	public:
@@ -75,6 +76,7 @@ namespace ranger { namespace event {
 			: m_top_bev(rhs.m_top_bev)
 			, m_base_bev(rhs.m_base_bev)
 			, m_token_bucket(std::move(rhs.m_token_bucket))
+			, m_filters(std::move(rhs.m_filters))
 			, m_event_handler(rhs.m_event_handler)
 			, m_extra_data(rhs.m_extra_data)
 		{
@@ -115,6 +117,13 @@ namespace ranger { namespace event {
 		static int error_code();
 		static const char* error_description();
 
+		template <class T, class... ARGS>
+		void append_filter(ARGS&&... args)
+		{
+			if (m_top_bev)
+				_append_filter(std::unique_ptr<filter_handler>(new T(std::forward<ARGS>(args)...)));
+		}
+
 		void set_event_handler(event_handler* handler) { m_event_handler = handler; }
 		event_handler* get_event_handler() const { return m_event_handler; }
 
@@ -129,6 +138,7 @@ namespace ranger { namespace event {
 			swap(m_top_bev, rhs.m_top_bev);
 			swap(m_base_bev, rhs.m_base_bev);
 			swap(m_token_bucket, rhs.m_token_bucket);
+			swap(m_filters, rhs.m_filters);
 			swap(m_event_handler, rhs.m_event_handler);
 			swap(m_extra_data, rhs.m_extra_data);
 		}
@@ -146,10 +156,13 @@ namespace ranger { namespace event {
 	private:
 		explicit tcp_connection(bufferevent* bev);
 
+		void _append_filter(std::unique_ptr<filter_handler> filter);
+
 	private:
 		bufferevent* m_top_bev;
 		bufferevent* m_base_bev;
 		std::shared_ptr<const token_bucket_cfg> m_token_bucket;
+		std::vector<std::unique_ptr<filter_handler> > m_filters;
 		event_handler* m_event_handler = nullptr;
 		void* m_extra_data = nullptr;
 	};

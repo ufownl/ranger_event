@@ -24,14 +24,9 @@ public:
 private:
 	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf) final
 	{
-		std::vector<char> v;
-		while (buf.size() > 0)
-		{
-			v.resize(buf.size());
-			buf.remove(&v.front(), v.size());
-			
-			for (auto ch: v) std::cout << ch << std::flush;
-		}
+		std::vector<char> v(buf.size());
+		buf.remove(&v.front(), v.size());
+		for (auto ch: v) std::cout << ch << std::flush;
 	}
 
 	void handle_connected(ranger::event::tcp_connection& conn) final
