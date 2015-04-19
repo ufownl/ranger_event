@@ -173,7 +173,8 @@ namespace ranger { namespace event {
 	}
 
 	tcp_connection::tcp_connection(dispatcher& disp, const endpoint& ep)
-		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS))
+		//: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS))
+		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
 	{
 		if (bufferevent_socket_connect(m_base_bev, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in)) == -1)
 		{
@@ -183,7 +184,8 @@ namespace ranger { namespace event {
 	}
 
 	tcp_connection::tcp_connection(dispatcher& disp, const char* addr, int port)
-		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS))
+		//: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS))
+		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
 	{
 		if (bufferevent_socket_connect_hostname(m_base_bev, 0, AF_UNSPEC, addr, port) == -1)
 		{
@@ -198,7 +200,8 @@ namespace ranger { namespace event {
 	}
 
 	tcp_connection::tcp_connection(event_base* base, int fd)
-		: tcp_connection(bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS))
+		//: tcp_connection(bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS))
+		: tcp_connection(bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
 	{
 	}
 
@@ -264,7 +267,8 @@ namespace ranger { namespace event {
 
 	void tcp_connection::_append_filter(std::unique_ptr<filter_handler> filter)
 	{
-		std::unique_ptr<bufferevent, void(*)(bufferevent*)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS, filter_free, filter.get()), bufferevent_free);
+		//std::unique_ptr<bufferevent, void(*)(bufferevent*)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS, filter_free, filter.get()), bufferevent_free);
+		std::unique_ptr<bufferevent, void(*)(bufferevent*)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS, filter_free, filter.get()), bufferevent_free);
 		if (!bev_filter)
 			throw std::runtime_error("bufferevent_filter create failed.");
 

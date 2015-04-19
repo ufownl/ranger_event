@@ -25,10 +25,7 @@ SET(CMAKE_CXX_FLAGS
 ADD_LIBRARY(ranger_event
 		${EVENT_HEADER}
 		${EVENT_SOURCE})
-TARGET_LINK_LIBRARIES(ranger_event
-		event_core event_pthreads)
+TARGET_LINK_LIBRARIES(ranger_event event_core)
 
-INSTALL(TARGETS ranger_event
-		DESTINATION lib)
-INSTALL(FILES ${EVENT_HEADER}
-		DESTINATION include/event)
+INSTALL(TARGETS ranger_event DESTINATION lib)
+INSTALL(FILES ${EVENT_HEADER} DESTINATION include/event)

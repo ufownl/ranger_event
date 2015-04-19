@@ -39,7 +39,7 @@ namespace ranger { namespace event {
 		if (!m_buf)
 			throw std::runtime_error("evbuffer create failed.");
 
-		evbuffer_enable_locking(m_buf, nullptr);
+		//evbuffer_enable_locking(m_buf, nullptr);
 	}
 
 	buffer::~buffer()
