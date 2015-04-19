@@ -130,7 +130,7 @@ namespace ranger { namespace event {
 		void set_extra_data(void* extra) { m_extra_data = extra; }
 		void* get_extra_data() const { return m_extra_data; }
 
-		void close() { tcp_connection conn = std::move(*this); }
+		void close() { tcp_connection(std::move(*this)); }
 
 		void swap(tcp_connection& rhs)
 		{

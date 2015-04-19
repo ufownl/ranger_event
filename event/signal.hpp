@@ -26,63 +26,60 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef RANGER_EVENT_TCP_ACCEPTOR_HPP
-#define RANGER_EVENT_TCP_ACCEPTOR_HPP
+#ifndef RANGER_EVENT_TRIGGER_HPP
+#define RANGER_EVENT_TRIGGER_HPP
 
 #include <memory>
+#include <functional>
 
-struct evconnlistener;
+struct event;
+struct event_base;
 
 namespace ranger { namespace event {
 
 	class dispatcher;
-	class endpoint;
-	class tcp_connection;
 
-	class tcp_acceptor : public std::enable_shared_from_this<tcp_acceptor>
+	class signal : public std::enable_shared_from_this<signal>
 	{
 	public:
-		struct event_handler
-		{
-			virtual void handle_accept(tcp_acceptor&, tcp_connection&) = 0;
-		};
+		using event_handler = std::function<void(signal&)>;
 
 	public:
-		~tcp_acceptor();
+		~signal();
 
-		tcp_acceptor(const tcp_acceptor&) = delete;
-		tcp_acceptor& operator = (const tcp_acceptor&) = delete;
+		signal(const signal&) = delete;
+		signal& operator = (const signal&) = delete;
 
-		tcp_acceptor(tcp_acceptor&& rhs)
-			: m_listener(rhs.m_listener)
-			, m_event_handler(rhs.m_event_handler)
+		signal(signal&& rhs)
+			: m_event(rhs.m_event)
+			, m_event_handler(std::move(rhs.m_event_handler))
 		{
-			rhs.m_listener = nullptr;
-			rhs.m_event_handler = nullptr;
+			m_event = nullptr;
 		}
 
-		tcp_acceptor& operator = (tcp_acceptor&& rhs)
+		signal& operator = (signal&& rhs)
 		{
 			if (this != &rhs)
 			{
-				tcp_acceptor acc = std::move(rhs);
-				swap(acc);
+				signal ev = std::move(rhs);
+				swap(ev);
 			}
 
 			return *this;
 		}
 
-		static std::shared_ptr<tcp_acceptor> create(dispatcher& disp, const endpoint& ep, int backlog = -1);
+		static std::shared_ptr<signal> create(dispatcher& disp, int sig, const event_handler& handler);
+		static std::shared_ptr<signal> create(dispatcher& disp, int sig, event_handler&& handler);
 
-		void set_event_handler(event_handler* handler) { m_event_handler = handler; }
-		event_handler* get_event_handler() const { return m_event_handler; }
+		void active();
+		void close() { signal(std::move(*this)); }
 
-		void close() { tcp_acceptor(std::move(*this)); }
+		const event_handler& get_event_handler() const { return m_event_handler; }
 
-		void swap(tcp_acceptor& rhs)
+		void swap(signal& rhs)
 		{
 			using std::swap;
-			swap(m_listener, rhs.m_listener);
+			swap(m_event, rhs.m_event);
 			swap(m_event_handler, rhs.m_event_handler);
 		}
 
@@ -91,18 +88,16 @@ namespace ranger { namespace event {
 #else
 	private:
 #endif	// RANGER_EVENT_INTERNAL
-		tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog);
+		signal(dispatcher& disp, int sig, const event_handler& handler);
+		signal(dispatcher& disp, int sig, event_handler&& handler);
+
+		void _init(event_base* base, int sig);
 
 	private:
-		evconnlistener* m_listener;
-		event_handler* m_event_handler = nullptr;
+		struct event* m_event;
+		event_handler m_event_handler;
 	};
-
-	inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs)
-	{
-		lhs.swap(rhs);
-	}
 
 } }
 
-#endif	// RANGER_EVENT_TCP_ACCEPTOR_HPP
+#endif	// RANGER_EVENT_TRIGGER_HPP

@@ -26,83 +26,72 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef RANGER_EVENT_TCP_ACCEPTOR_HPP
-#define RANGER_EVENT_TCP_ACCEPTOR_HPP
-
-#include <memory>
-
-struct evconnlistener;
+#include "trigger.hpp"
+#include "dispatcher.hpp"
+#include <event2/event.h>
+#include <stdexcept>
 
 namespace ranger { namespace event {
 
-	class dispatcher;
-	class endpoint;
-	class tcp_connection;
-
-	class tcp_acceptor : public std::enable_shared_from_this<tcp_acceptor>
+	trigger::~trigger()
 	{
-	public:
-		struct event_handler
+		if (m_event)
 		{
-			virtual void handle_accept(tcp_acceptor&, tcp_connection&) = 0;
-		};
-
-	public:
-		~tcp_acceptor();
-
-		tcp_acceptor(const tcp_acceptor&) = delete;
-		tcp_acceptor& operator = (const tcp_acceptor&) = delete;
-
-		tcp_acceptor(tcp_acceptor&& rhs)
-			: m_listener(rhs.m_listener)
-			, m_event_handler(rhs.m_event_handler)
-		{
-			rhs.m_listener = nullptr;
-			rhs.m_event_handler = nullptr;
+			event_del(m_event);
 		}
+	}
 
-		tcp_acceptor& operator = (tcp_acceptor&& rhs)
+	std::shared_ptr<trigger> trigger::create(dispatcher& disp, const event_handler& handler)
+	{
+		return std::make_shared<trigger>(disp, handler);
+	}
+
+	std::shared_ptr<trigger> trigger::create(dispatcher& disp, event_handler&& handler)
+	{
+		return std::make_shared<trigger>(disp, std::move(handler));
+	}
+
+	void trigger::active()
+	{
+		if (m_event)
 		{
-			if (this != &rhs)
+			event_add(m_event, nullptr);
+			event_active(m_event, EV_WRITE, 0);
+		}
+	}
+
+	trigger::trigger(dispatcher& disp, const event_handler& handler)
+		: m_event_handler(handler)
+	{
+		_init(disp._event_base());
+	}
+
+	trigger::trigger(dispatcher& disp, event_handler&& handler)
+		: m_event_handler(std::move(handler))
+	{
+		_init(disp._event_base());
+	}
+
+	namespace
+	{
+
+		void handle_touch(evutil_socket_t fd, short what, void* ctx)
+		{
+			auto tr = static_cast<trigger*>(ctx)->shared_from_this();
+			auto& handler = tr->get_event_handler();
+			if (handler)
 			{
-				tcp_acceptor acc = std::move(rhs);
-				swap(acc);
+				handler(*tr);
 			}
-
-			return *this;
 		}
 
-		static std::shared_ptr<tcp_acceptor> create(dispatcher& disp, const endpoint& ep, int backlog = -1);
+	}
 
-		void set_event_handler(event_handler* handler) { m_event_handler = handler; }
-		event_handler* get_event_handler() const { return m_event_handler; }
-
-		void close() { tcp_acceptor(std::move(*this)); }
-
-		void swap(tcp_acceptor& rhs)
-		{
-			using std::swap;
-			swap(m_listener, rhs.m_listener);
-			swap(m_event_handler, rhs.m_event_handler);
-		}
-
-#ifdef RANGER_EVENT_INTERNAL
-	public:
-#else
-	private:
-#endif	// RANGER_EVENT_INTERNAL
-		tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog);
-
-	private:
-		evconnlistener* m_listener;
-		event_handler* m_event_handler = nullptr;
-	};
-
-	inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs)
+	void trigger::_init(event_base* base)
 	{
-		lhs.swap(rhs);
+		m_event = event_new(base, -1, 0, handle_touch, this);
+		if (!m_event)
+			throw std::runtime_error("event create failed.");
 	}
 
 } }
-
-#endif	// RANGER_EVENT_TCP_ACCEPTOR_HPP

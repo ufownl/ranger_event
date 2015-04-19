@@ -26,83 +26,75 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef RANGER_EVENT_TCP_ACCEPTOR_HPP
-#define RANGER_EVENT_TCP_ACCEPTOR_HPP
-
-#include <memory>
-
-struct evconnlistener;
+#include "timer.hpp"
+#include "dispatcher.hpp"
+#include <event2/event.h>
+#include <stdexcept>
 
 namespace ranger { namespace event {
 
-	class dispatcher;
-	class endpoint;
-	class tcp_connection;
-
-	class tcp_acceptor : public std::enable_shared_from_this<tcp_acceptor>
+	timer::~timer()
 	{
-	public:
-		struct event_handler
+		if (m_event)
 		{
-			virtual void handle_accept(tcp_acceptor&, tcp_connection&) = 0;
-		};
-
-	public:
-		~tcp_acceptor();
-
-		tcp_acceptor(const tcp_acceptor&) = delete;
-		tcp_acceptor& operator = (const tcp_acceptor&) = delete;
-
-		tcp_acceptor(tcp_acceptor&& rhs)
-			: m_listener(rhs.m_listener)
-			, m_event_handler(rhs.m_event_handler)
-		{
-			rhs.m_listener = nullptr;
-			rhs.m_event_handler = nullptr;
+			event_del(m_event);
 		}
+	}
 
-		tcp_acceptor& operator = (tcp_acceptor&& rhs)
+	std::shared_ptr<timer> timer::create(dispatcher& disp, const event_handler& handler)
+	{
+		return std::make_shared<timer>(disp, handler);
+	}
+
+	std::shared_ptr<timer> timer::create(dispatcher& disp, event_handler&& handler)
+	{
+		return std::make_shared<timer>(disp, std::move(handler));
+	}
+
+	void timer::active(float duration)
+	{
+		if (duration > 0.0f)
 		{
-			if (this != &rhs)
+			timeval tv;
+			tv.tv_sec = static_cast<long>(duration);
+			tv.tv_usec = static_cast<long>((duration - tv.tv_sec) * 1e6);
+
+			event_add(m_event, &tv);
+		}
+	}
+
+	timer::timer(dispatcher& disp, const event_handler& handler)
+		: m_event_handler(handler)
+	{
+		_init(disp._event_base());
+	}
+
+	timer::timer(dispatcher& disp, event_handler&& handler)
+		: m_event_handler(std::move(handler))
+	{
+		_init(disp._event_base());
+	}
+
+	namespace
+	{
+
+		void handle_expire(evutil_socket_t fd, short what, void* ctx)
+		{
+			auto tmr = static_cast<timer*>(ctx)->shared_from_this();
+			auto& handler = tmr->get_event_handler();
+			if (handler)
 			{
-				tcp_acceptor acc = std::move(rhs);
-				swap(acc);
+				handler(*tmr);
 			}
-
-			return *this;
 		}
 
-		static std::shared_ptr<tcp_acceptor> create(dispatcher& disp, const endpoint& ep, int backlog = -1);
+	}
 
-		void set_event_handler(event_handler* handler) { m_event_handler = handler; }
-		event_handler* get_event_handler() const { return m_event_handler; }
-
-		void close() { tcp_acceptor(std::move(*this)); }
-
-		void swap(tcp_acceptor& rhs)
-		{
-			using std::swap;
-			swap(m_listener, rhs.m_listener);
-			swap(m_event_handler, rhs.m_event_handler);
-		}
-
-#ifdef RANGER_EVENT_INTERNAL
-	public:
-#else
-	private:
-#endif	// RANGER_EVENT_INTERNAL
-		tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog);
-
-	private:
-		evconnlistener* m_listener;
-		event_handler* m_event_handler = nullptr;
-	};
-
-	inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs)
+	void timer::_init(event_base* base)
 	{
-		lhs.swap(rhs);
+		m_event = event_new(base, -1, 0, handle_expire, this);
+		if (!m_event)
+			throw std::runtime_error("event create failed.");
 	}
 
 } }
-
-#endif	// RANGER_EVENT_TCP_ACCEPTOR_HPP
