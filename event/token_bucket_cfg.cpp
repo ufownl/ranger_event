@@ -35,9 +35,7 @@ namespace ranger { namespace event {
 	token_bucket_cfg::~token_bucket_cfg()
 	{
 		if (m_cfg)
-		{
 			ev_token_bucket_cfg_free(m_cfg);
-		}
 	}
 
 	std::shared_ptr<token_bucket_cfg> token_bucket_cfg::create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, float period /* = 0.0f */)
@@ -56,14 +54,10 @@ namespace ranger { namespace event {
 			m_cfg = ev_token_bucket_cfg_new(read_rate, read_burst, write_rate, write_burst, &tv);
 		}
 		else
-		{
 			m_cfg = ev_token_bucket_cfg_new(read_rate, read_burst, write_rate, write_burst, nullptr);
-		}
 
 		if (!m_cfg)
-		{
 			throw std::runtime_error("ev_token_bucket_cfg_new call failed.");
-		}
 	}
 
 } }

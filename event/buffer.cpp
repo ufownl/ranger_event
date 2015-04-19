@@ -37,9 +37,7 @@ namespace ranger { namespace event {
 		, m_flag(true)
 	{
 		if (!m_buf)
-		{
 			throw std::runtime_error("evbuffer create failed.");
-		}
 
 		evbuffer_enable_locking(m_buf, nullptr);
 	}
@@ -47,17 +45,13 @@ namespace ranger { namespace event {
 	buffer::~buffer()
 	{
 		if (m_buf && m_flag)
-		{
 			evbuffer_free(m_buf);
-		}
 	}
 
 	bool buffer::append(const void* src, size_t len)
 	{
 		if (!m_buf)
-		{
 			return false;
-		}
 
 		return evbuffer_add(m_buf, src, len) == 0;
 	}
@@ -65,9 +59,7 @@ namespace ranger { namespace event {
 	bool buffer::append(buffer& src)
 	{
 		if (!m_buf)
-		{
 			return false;
-		}
 
 		return evbuffer_add_buffer(m_buf, src.m_buf) == 0;
 	}
@@ -90,9 +82,7 @@ namespace ranger { namespace event {
 	int buffer::vprintf(const char* fmt, va_list ap)
 	{
 		if (!m_buf)
-		{
 			return -1;
-		}
 
 		return evbuffer_add_vprintf(m_buf, fmt, ap);
 	}
@@ -100,9 +90,7 @@ namespace ranger { namespace event {
 	int buffer::remove(void* dst, size_t len)
 	{
 		if (!m_buf)
-		{
 			return -1;
-		}
 
 		return evbuffer_remove(m_buf, dst, len);
 	}
@@ -110,9 +98,7 @@ namespace ranger { namespace event {
 	int buffer::remove(buffer& dst, size_t len)
 	{
 		if (!m_buf)
-		{
 			return -1;
-		}
 
 		return evbuffer_remove_buffer(m_buf, dst.m_buf, len);
 	}

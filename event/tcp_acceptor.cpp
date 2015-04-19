@@ -38,9 +38,7 @@ namespace ranger { namespace event {
 	tcp_acceptor::~tcp_acceptor()
 	{
 		if (m_listener)
-		{
 			evconnlistener_free(m_listener);
-		}
 	}
 
 	std::shared_ptr<tcp_acceptor> tcp_acceptor::create(dispatcher& disp, const endpoint& ep, int backlog /* = -1 */)
@@ -57,9 +55,7 @@ namespace ranger { namespace event {
 			auto conn = std::make_shared<tcp_connection>(evconnlistener_get_base(listener), fd);
 			auto handler = acc->get_event_handler();
 			if (handler)
-			{
 				handler->handle_accept(*acc, *conn);
-			}
 		}
 
 	}
@@ -68,9 +64,7 @@ namespace ranger { namespace event {
 	{
 		m_listener = evconnlistener_new_bind(disp._event_base(), handle_accept, this, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_THREADSAFE, backlog, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in));
 		if (!m_listener)
-		{
 			throw std::runtime_error("evconnlistener create failed.");
-		}
 	}
 
 } }

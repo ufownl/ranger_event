@@ -55,17 +55,13 @@ namespace ranger { namespace event {
 
 		m_base = event_base_new();
 		if (!m_base)
-		{
 			throw std::runtime_error("event_base create faild.");
-		}
 	}
 
 	dispatcher::~dispatcher()
 	{
 		if (m_base)
-		{
 			event_base_free(m_base);
-		}
 	}
 
 	int dispatcher::run()
@@ -88,9 +84,7 @@ namespace ranger { namespace event {
 			event_base_loopexit(m_base, &tv);
 		}
 		else
-		{
 			event_base_loopexit(m_base, nullptr);
-		}
 	}
 
 	void dispatcher::kill()

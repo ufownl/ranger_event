@@ -104,6 +104,8 @@ namespace ranger { namespace event {
 		bool send(const void* src, size_t len);
 		bool send(buffer& src);
 
+		void set_timeouts(float read_timeout, float write_timeout);
+
 		void set_rate_limit(const token_bucket_cfg& cfg);
 		void reset_rate_limit();
 		bool decrement_read_limit(ssize_t decr);

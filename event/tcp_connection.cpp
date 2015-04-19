@@ -40,9 +40,7 @@ namespace ranger { namespace event {
 	tcp_connection::~tcp_connection()
 	{
 		if (m_top_bev)
-		{
 			bufferevent_free(m_top_bev);
-		}
 	}
 
 	std::shared_ptr<tcp_connection> tcp_connection::create(dispatcher& disp, const endpoint& ep)
@@ -63,9 +61,7 @@ namespace ranger { namespace event {
 	bool tcp_connection::send(const void* src, size_t len)
 	{
 		if (!m_top_bev)
-		{
 			return false;
-		}
 
 		return bufferevent_write(m_top_bev, src, len) == 0;
 	}
@@ -73,11 +69,32 @@ namespace ranger { namespace event {
 	bool tcp_connection::send(buffer& src)
 	{
 		if (!m_top_bev)
-		{
 			return false;
-		}
 
 		return bufferevent_write_buffer(m_top_bev, src._evbuffer()) == 0;
+	}
+
+	void tcp_connection::set_timeouts(float read_timeout, float write_timeout)
+	{
+		if (m_base_bev)
+		{
+			timeval read_tv;
+			timeval write_tv;
+
+			if (read_timeout > 0.0f)
+			{
+				read_tv.tv_sec = static_cast<long>(read_timeout);
+				read_tv.tv_usec = static_cast<long>((read_timeout - read_tv.tv_sec) * 1e6);
+			}
+
+			if (write_timeout > 0.0f)
+			{
+				write_tv.tv_sec = static_cast<long>(write_timeout);
+				write_tv.tv_usec = static_cast<long>((write_timeout - write_tv.tv_sec) * 1e6);
+			}
+
+			bufferevent_set_timeouts(m_base_bev, read_timeout > 0.0f ? &read_tv : nullptr, write_timeout > 0.0f ? &write_tv : nullptr);
+		}
 	}
 
 	void tcp_connection::set_rate_limit(const token_bucket_cfg& cfg)
@@ -101,9 +118,7 @@ namespace ranger { namespace event {
 	bool tcp_connection::decrement_read_limit(ssize_t decr)
 	{
 		if (!m_base_bev)
-		{
 			return false;
-		}
 
 		return bufferevent_decrement_read_limit(m_base_bev, decr);
 	}
@@ -111,9 +126,7 @@ namespace ranger { namespace event {
 	bool tcp_connection::decrement_write_limit(ssize_t decr)
 	{
 		if (!m_base_bev)
-		{
 			return false;
-		}
 
 		return bufferevent_decrement_write_limit(m_base_bev, decr);
 	}
@@ -121,9 +134,7 @@ namespace ranger { namespace event {
 	ssize_t tcp_connection::get_read_limit() const
 	{
 		if (!m_base_bev)
-		{
 			return 0;
-		}
 
 		return bufferevent_get_read_limit(m_base_bev);
 	}
@@ -131,9 +142,7 @@ namespace ranger { namespace event {
 	ssize_t tcp_connection::get_write_limit() const
 	{
 		if (!m_base_bev)
-		{
 			return 0;
-		}
 
 		return bufferevent_get_write_limit(m_base_bev);
 	}
@@ -141,15 +150,11 @@ namespace ranger { namespace event {
 	endpoint tcp_connection::remote_endpoint() const
 	{
 		if (!m_base_bev)
-		{
 			return endpoint();
-		}
 
 		evutil_socket_t fd = bufferevent_getfd(m_base_bev);
 		if (fd == -1)
-		{
 			return endpoint();
-		}
 
 		sockaddr_in sin;
 		socklen_t len = sizeof(sin);
@@ -205,9 +210,7 @@ namespace ranger { namespace event {
 			auto conn = static_cast<tcp_connection*>(ctx)->shared_from_this();
 			auto handler = conn->get_event_handler();
 			if (handler)
-			{
 				handler->handle_read(*conn, buffer(bufferevent_get_input(bev)));
-			}
 		}
 
 		void handle_write(bufferevent* bev, void* ctx)
@@ -215,9 +218,7 @@ namespace ranger { namespace event {
 			auto conn = static_cast<tcp_connection*>(ctx)->shared_from_this();
 			auto handler = conn->get_event_handler();
 			if (handler)
-			{
 				handler->handle_write(*conn, buffer(bufferevent_get_output(bev)));
-			}
 		}
 
 		void handle_event(bufferevent* bev, short what, void* ctx)
@@ -250,9 +251,7 @@ namespace ranger { namespace event {
 		, m_base_bev(bev)
 	{
 		if (!bev)
-		{
 			throw std::runtime_error("bufferevent create failed.");
-		}
 
 		bufferevent_setcb(bev, handle_read, handle_write, handle_event, this);
 		bufferevent_enable(bev, EV_READ | EV_WRITE);
@@ -262,9 +261,7 @@ namespace ranger { namespace event {
 	{
 		std::unique_ptr<bufferevent, void(*)(bufferevent*)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS, nullptr, filter.get()), bufferevent_free);
 		if (!bev_filter)
-		{
 			throw std::runtime_error("bufferevent_filter create failed.");
-		}
 
 		bufferevent_setcb(bev_filter.get(), handle_read, handle_write, handle_event, this);
 		bufferevent_enable(bev_filter.get(), EV_READ | EV_WRITE);
