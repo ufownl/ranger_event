@@ -244,6 +244,11 @@ namespace ranger { namespace event {
 			return static_cast<tcp_connection::filter_handler*>(ctx)->handle_output(buffer(src), buffer(dst)) ? BEV_OK : BEV_NEED_MORE;
 		}
 
+		void filter_free(void* filter)
+		{
+			delete static_cast<tcp_connection::filter_handler*>(filter);
+		}
+
 	}
 
 	tcp_connection::tcp_connection(bufferevent* bev)
@@ -259,16 +264,15 @@ namespace ranger { namespace event {
 
 	void tcp_connection::_append_filter(std::unique_ptr<filter_handler> filter)
 	{
-		std::unique_ptr<bufferevent, void(*)(bufferevent*)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS, nullptr, filter.get()), bufferevent_free);
+		std::unique_ptr<bufferevent, void(*)(bufferevent*)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS, filter_free, filter.get()), bufferevent_free);
 		if (!bev_filter)
 			throw std::runtime_error("bufferevent_filter create failed.");
 
 		bufferevent_setcb(bev_filter.get(), handle_read, handle_write, handle_event, this);
 		bufferevent_enable(bev_filter.get(), EV_READ | EV_WRITE);
 
-		m_filters.emplace_back(std::move(filter));
-
 		m_top_bev = bev_filter.release();
+		filter.release();
 	}
 
 } }

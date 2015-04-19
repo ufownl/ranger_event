@@ -36,7 +36,6 @@
 #include <event/endpoint.hpp>
 #include <event/token_bucket_cfg.hpp>
 #endif	// RANGER_EVENT_INTERNAL
-#include <vector>
 
 struct bufferevent;
 struct event_base;
@@ -76,7 +75,6 @@ namespace ranger { namespace event {
 			: m_top_bev(rhs.m_top_bev)
 			, m_base_bev(rhs.m_base_bev)
 			, m_token_bucket(std::move(rhs.m_token_bucket))
-			, m_filters(std::move(rhs.m_filters))
 			, m_event_handler(rhs.m_event_handler)
 			, m_extra_data(rhs.m_extra_data)
 		{
@@ -140,7 +138,6 @@ namespace ranger { namespace event {
 			swap(m_top_bev, rhs.m_top_bev);
 			swap(m_base_bev, rhs.m_base_bev);
 			swap(m_token_bucket, rhs.m_token_bucket);
-			swap(m_filters, rhs.m_filters);
 			swap(m_event_handler, rhs.m_event_handler);
 			swap(m_extra_data, rhs.m_extra_data);
 		}
@@ -164,7 +161,6 @@ namespace ranger { namespace event {
 		bufferevent* m_top_bev;
 		bufferevent* m_base_bev;
 		std::shared_ptr<const token_bucket_cfg> m_token_bucket;
-		std::vector<std::unique_ptr<filter_handler> > m_filters;
 		event_handler* m_event_handler = nullptr;
 		void* m_extra_data = nullptr;
 	};

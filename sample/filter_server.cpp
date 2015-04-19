@@ -3,6 +3,7 @@
 #include <event/tcp_connection.hpp>
 #include <event/buffer.hpp>
 #include <iostream>
+#include <vector>
 #include <map>
 
 class size_filter : public ranger::event::tcp_connection::filter_handler
@@ -11,6 +12,11 @@ public:
 	size_filter(size_t sz)
 		: m_size(sz)
 	{
+	}
+
+	~size_filter()
+	{
+		std::cout << __FUNCTION__ << std::endl;
 	}
 
 	bool handle_input(ranger::event::buffer&& src, ranger::event::buffer&& dst) final
@@ -40,6 +46,11 @@ private:
 class transform_filter : public ranger::event::tcp_connection::filter_handler
 {
 private:
+	~transform_filter()
+	{
+		std::cout << __FUNCTION__ << std::endl;
+	}
+
 	void transform(ranger::event::buffer& src, ranger::event::buffer& dst)
 	{
 		std::vector<char> v(src.size());
