@@ -40,7 +40,7 @@ private:
 class transform_filter : public ranger::event::tcp_connection::filter_handler
 {
 private:
-	void transform(ranger::event::buffer&& src, ranger::event::buffer&& dst)
+	void transform(ranger::event::buffer& src, ranger::event::buffer& dst)
 	{
 		std::vector<char> v(src.size());
 		src.remove(&v.front(), v.size());
@@ -51,13 +51,13 @@ private:
 
 	bool handle_input(ranger::event::buffer&& src, ranger::event::buffer&& dst) final
 	{
-		transform(std::move(src), std::move(dst));
+		transform(src, dst);
 		return true;
 	}
 
 	bool handle_output(ranger::event::buffer&& src, ranger::event::buffer&& dst) final
 	{
-		transform(std::move(src), std::move(dst));
+		transform(src, dst);
 		return true;
 	}
 };
