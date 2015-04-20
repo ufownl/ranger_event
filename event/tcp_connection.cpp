@@ -32,6 +32,7 @@
 #include "buffer.hpp"
 #include <event2/event.h>
 #include <event2/bufferevent.h>
+#include <unistd.h>
 #include <errno.h>
 #include <stdexcept>
 
@@ -56,6 +57,47 @@ namespace ranger { namespace event {
 	std::shared_ptr<tcp_connection> tcp_connection::create(dispatcher& disp, const std::string& addr, int port)
 	{
 		return std::make_shared<tcp_connection>(disp, addr, port);
+	}
+
+	namespace
+	{
+		
+		void fd_close(evutil_socket_t* fd)
+		{
+			close(*fd);
+		}
+
+	}
+
+	std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > tcp_connection::create_pair(dispatcher& first_disp, dispatcher& second_disp)
+	{
+		evutil_socket_t fd_pair[2];
+		if (evutil_socketpair(AF_LOCAL, SOCK_STREAM, 0, fd_pair) == -1)
+		{
+			throw std::runtime_error("evutil_socketpair call failed.");
+		}
+
+		std::unique_ptr<evutil_socket_t, decltype(&fd_close)> fd_guard_pair[2] { { &fd_pair[0], fd_close }, { &fd_pair[1], fd_close } };
+
+		for (auto fd: fd_pair)
+		{
+			if (evutil_make_socket_nonblocking(fd) == -1)
+				throw std::runtime_error("evutil_make_socket_nonblocking call failed.");
+		}
+
+		auto conn_pair = std::make_pair(std::make_shared<tcp_connection>(first_disp, fd_pair[0]), std::make_shared<tcp_connection>(second_disp, fd_pair[1]));
+
+		for (auto& fd_guard: fd_guard_pair)
+		{
+			fd_guard.release();
+		}
+
+		return conn_pair;
+	}
+
+	std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > tcp_connection::create_pair(dispatcher& disp)
+	{
+		return create_pair(disp, disp);
 	}
 
 	bool tcp_connection::send(const void* src, size_t len)
@@ -199,6 +241,11 @@ namespace ranger { namespace event {
 	{
 	}
 
+	tcp_connection::tcp_connection(dispatcher& disp, int fd)
+		: tcp_connection(disp._event_base(), fd)
+	{
+	}
+
 	tcp_connection::tcp_connection(event_base* base, int fd)
 		//: tcp_connection(bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS))
 		: tcp_connection(bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
@@ -268,7 +315,7 @@ namespace ranger { namespace event {
 	void tcp_connection::_append_filter(std::unique_ptr<filter_handler> filter)
 	{
 		//std::unique_ptr<bufferevent, void(*)(bufferevent*)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE | BEV_OPT_UNLOCK_CALLBACKS | BEV_OPT_DEFER_CALLBACKS, filter_free, filter.get()), bufferevent_free);
-		std::unique_ptr<bufferevent, void(*)(bufferevent*)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS, filter_free, filter.get()), bufferevent_free);
+		std::unique_ptr<bufferevent, decltype(&bufferevent_free)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS, filter_free, filter.get()), bufferevent_free);
 		if (!bev_filter)
 			throw std::runtime_error("bufferevent_filter create failed.");
 
