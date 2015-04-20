@@ -3,7 +3,7 @@
 #include <event/tcp_connection.hpp>
 #include <event/buffer.hpp>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 
 class echo_server
 	: public ranger::event::tcp_acceptor::event_handler
@@ -64,7 +64,7 @@ private:
 	ranger::event::dispatcher m_disp;
 	std::shared_ptr<ranger::event::tcp_acceptor> m_acc;
 
-	std::map<ranger::event::tcp_connection*, std::shared_ptr<ranger::event::tcp_connection> > m_conn_map;
+	std::unordered_map<ranger::event::tcp_connection*, std::shared_ptr<ranger::event::tcp_connection> > m_conn_map;
 };
 
 int main(int argc, char* argv[])

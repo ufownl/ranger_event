@@ -4,7 +4,7 @@
 #include <event/buffer.hpp>
 #include <iostream>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 class size_filter : public ranger::event::tcp_connection::filter_handler
 {
@@ -139,7 +139,7 @@ private:
 	std::shared_ptr<ranger::event::tcp_acceptor> m_acc;
 	size_t m_size;
 
-	std::map<ranger::event::tcp_connection*, std::shared_ptr<ranger::event::tcp_connection> > m_conn_map;
+	std::unordered_map<ranger::event::tcp_connection*, std::shared_ptr<ranger::event::tcp_connection> > m_conn_map;
 };
 
 int main(int argc, char* argv[])
