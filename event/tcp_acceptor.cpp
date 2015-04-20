@@ -31,6 +31,7 @@
 #include "endpoint.hpp"
 #include "tcp_connection.hpp"
 #include <event2/listener.h>
+#include <unistd.h>
 #include <stdexcept>
 
 namespace ranger { namespace event {
@@ -63,14 +64,22 @@ namespace ranger { namespace event {
 
 	namespace
 	{
+		void fd_close(evutil_socket_t* fd)
+		{
+			close(*fd);
+		}
 
 		void handle_accept(evconnlistener* listener, evutil_socket_t fd, sockaddr* addr, int socklen, void* ctx)
 		{
+			std::unique_ptr<evutil_socket_t, decltype(&fd_close)> fd_guard(&fd, fd_close);
+
 			auto acc = static_cast<tcp_acceptor*>(ctx)->shared_from_this();
 			auto conn = std::make_shared<tcp_connection>(evconnlistener_get_base(listener), fd);
 			auto handler = acc->get_event_handler();
 			if (handler)
 				handler->handle_accept(*acc, *conn);
+
+			fd_guard.release();
 		}
 
 	}

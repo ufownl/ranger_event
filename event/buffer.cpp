@@ -110,7 +110,7 @@ namespace ranger { namespace event {
 		if (m_buf)
 		{
 			size_t len = 0;
-			std::unique_ptr<char, void(*)(void*)> line(evbuffer_readln(m_buf, &len, EVBUFFER_EOL_CRLF), free);
+			std::unique_ptr<char, decltype(&free)> line(evbuffer_readln(m_buf, &len, EVBUFFER_EOL_CRLF), free);
 			if (len > 0) ret = line.get();
 		}
 
