@@ -10,7 +10,7 @@ class echo_server
 	, public ranger::event::tcp_connection::event_handler
 {
 public:
-	echo_server(int port)
+	explicit echo_server(int port)
 		: m_acc(ranger::event::tcp_acceptor::create(m_disp, ranger::event::endpoint(port)))
 	{
 		m_acc->set_event_handler(this);

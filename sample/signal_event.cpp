@@ -16,8 +16,11 @@ int main(int argc, char* argv[])
 	ranger::event::dispatcher disp;
 	auto sig = ranger::event::signal::create(disp, sig_num, [sig_num, &tick_cnt] (ranger::event::signal& sig)
 			{
-				std::cout << "signal: " << sig_num << std::endl;
-				if (--tick_cnt > 0) sig.active();
+				if (tick_cnt-- > 0)
+				{
+					std::cout << "signal: " << sig_num << std::endl;
+					sig.active();
+				}
 			});
 	sig->active();
 	return disp.run();

@@ -15,9 +15,11 @@ int main(int argc, char* argv[])
 	ranger::event::dispatcher disp;
 	auto tr = ranger::event::trigger::create(disp, [&tick_cnt] (ranger::event::trigger& tr)
 			{
-				std::cout << "touch: " << tick_cnt << std::endl;
-				if (--tick_cnt > 0)
+				if (tick_cnt-- > 0)
+				{
+					std::cout << "touch: " << tick_cnt << std::endl;
 					tr.active();
+				}
 			});
 	tr->active();
 	return disp.run();

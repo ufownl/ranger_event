@@ -9,7 +9,7 @@
 class size_filter : public ranger::event::tcp_connection::filter_handler
 {
 public:
-	size_filter(size_t sz)
+	explicit size_filter(size_t sz)
 		: m_size(sz)
 	{
 	}

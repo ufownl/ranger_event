@@ -16,9 +16,11 @@ int main(int argc, char* argv[])
 	ranger::event::dispatcher disp;
 	auto tmr = ranger::event::timer::create(disp, [period, &tick_cnt] (ranger::event::timer& tmr)
 			{
-				std::cout << "Tick." << std::endl;
-				
-				if (--tick_cnt > 0) tmr.active(period);
+				if (tick_cnt-- > 0)
+				{
+					std::cout << "Tick." << std::endl;
+					tmr.active(period);
+				}
 			});
 	tmr->active(period);
 	return disp.run();
