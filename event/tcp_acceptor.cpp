@@ -31,7 +31,6 @@
 #include "endpoint.hpp"
 #include "tcp_connection.hpp"
 #include <event2/listener.h>
-#include <unistd.h>
 #include <stdexcept>
 
 namespace ranger { namespace event {
@@ -66,7 +65,7 @@ namespace ranger { namespace event {
 	{
 		void fd_close(evutil_socket_t* fd)
 		{
-			close(*fd);
+			evutil_closesocket(*fd);
 		}
 
 		void handle_accept(evconnlistener* listener, evutil_socket_t fd, sockaddr* addr, int socklen, void* ctx)

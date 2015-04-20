@@ -32,7 +32,6 @@
 #include "buffer.hpp"
 #include <event2/event.h>
 #include <event2/bufferevent.h>
-#include <unistd.h>
 #include <errno.h>
 #include <stdexcept>
 
@@ -64,7 +63,7 @@ namespace ranger { namespace event {
 		
 		void fd_close(evutil_socket_t* fd)
 		{
-			close(*fd);
+			evutil_closesocket(*fd);
 		}
 
 	}
