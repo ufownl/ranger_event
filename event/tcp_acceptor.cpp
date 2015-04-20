@@ -46,6 +46,21 @@ namespace ranger { namespace event {
 		return std::make_shared<tcp_acceptor>(disp, ep, backlog);
 	}
 
+	endpoint tcp_acceptor::local_endpoint() const
+	{
+		if (!m_listener)
+			return endpoint();
+
+		evutil_socket_t fd = evconnlistener_get_fd(m_listener);
+		if (fd == -1)
+			return endpoint();
+
+		sockaddr_in sin;
+		socklen_t len = sizeof(sin);
+		getsockname(fd, (sockaddr*)&sin, &len);
+		return endpoint(sin);
+	}
+
 	namespace
 	{
 

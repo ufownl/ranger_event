@@ -24,8 +24,9 @@ public:
 private:
 	void handle_accept(ranger::event::tcp_acceptor& acc, ranger::event::tcp_connection& conn) final
 	{
-		auto ep = conn.remote_endpoint();
-		std::cout << "accept connection[" << ep.addr() << ":" << ep.port() << "]." << std::endl;
+		auto local_ep = acc.local_endpoint();
+		auto remote_ep = conn.remote_endpoint();
+		std::cout << "acceptor[" << local_ep.addr() << ":" << local_ep.port() << "]" << " accept connection[" << remote_ep.addr() << ":" << remote_ep.port() << "]." << std::endl;
 
 		conn.set_event_handler(this);
 		m_conn_map[&conn] = conn.shared_from_this();

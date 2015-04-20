@@ -74,6 +74,8 @@ namespace ranger { namespace event {
 
 		static std::shared_ptr<tcp_acceptor> create(dispatcher& disp, const endpoint& ep, int backlog = -1);
 
+		endpoint local_endpoint() const;
+
 		void set_event_handler(event_handler* handler) { m_event_handler = handler; }
 		event_handler* get_event_handler() const { return m_event_handler; }
 
