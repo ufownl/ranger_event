@@ -90,14 +90,13 @@ namespace ranger { namespace event {
 				throw std::runtime_error("evutil_make_socket_nonblocking call failed.");
 		}
 
-		auto conn_pair = std::make_pair(create(first_disp, fd_pair[0]), create(second_disp, fd_pair[1]));
+		auto first_conn = create(first_disp, fd_pair[0]);
+		fd_guard_pair[0].release();
 
-		for (auto& fd_guard: fd_guard_pair)
-		{
-			fd_guard.release();
-		}
+		auto second_conn = create(second_disp, fd_pair[1]);
+		fd_guard_pair[1].release();
 
-		return conn_pair;
+		return std::make_pair(std::move(first_conn), std::move(second_conn));
 	}
 
 	std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > tcp_connection::create_pair(dispatcher& disp)
