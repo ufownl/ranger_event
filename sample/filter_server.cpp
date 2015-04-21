@@ -91,16 +91,20 @@ public:
 	}
 
 private:
-	void handle_accept(ranger::event::tcp_acceptor& acc, ranger::event::tcp_connection& conn) final
+	bool handle_accept(ranger::event::tcp_acceptor& acc, int fd) final
 	{
+		auto conn = ranger::event::tcp_connection::create(m_disp, fd);
+		conn->append_filter<size_filter>(m_size);
+		conn->append_filter<transform_filter>();
+		conn->set_event_handler(this);
+		
 		auto local_ep = acc.local_endpoint();
-		auto remote_ep = conn.remote_endpoint();
+		auto remote_ep = conn->remote_endpoint();
 		std::cout << "acceptor[" << local_ep << "]" << " accept connection[" << remote_ep << "]." << std::endl;
 
-		conn.append_filter<size_filter>(m_size);
-		conn.append_filter<transform_filter>();
-		conn.set_event_handler(this);
-		m_conn_map[&conn] = conn.shared_from_this();
+		m_conn_map[conn.get()] = conn;
+
+		return true;
 	}
 
 	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf) final

@@ -98,6 +98,7 @@ namespace ranger { namespace event {
 		static std::shared_ptr<tcp_connection> create(dispatcher& disp, const endpoint& ep);
 		static std::shared_ptr<tcp_connection> create(dispatcher& disp, const char* addr, int port);
 		static std::shared_ptr<tcp_connection> create(dispatcher& disp, const std::string& addr, int port);
+		static std::shared_ptr<tcp_connection> create(dispatcher& disp, int fd);
 		static std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > create_pair(dispatcher& first_disp, dispatcher& second_disp);
 		static std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > create_pair(dispatcher& disp);
 
@@ -156,7 +157,6 @@ namespace ranger { namespace event {
 		tcp_connection(dispatcher& disp, const char* addr, int port);
 		tcp_connection(dispatcher& disp, const std::string& addr, int port);
 		tcp_connection(dispatcher& disp, int fd);
-		tcp_connection(event_base* base, int fd);
 
 	private:
 		explicit tcp_connection(bufferevent* bev);

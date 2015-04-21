@@ -44,7 +44,7 @@ namespace ranger { namespace event {
 	public:
 		struct event_handler
 		{
-			virtual void handle_accept(tcp_acceptor&, tcp_connection&) = 0;
+			virtual bool handle_accept(tcp_acceptor&, int fd) = 0;
 		};
 
 	public:

@@ -73,19 +73,15 @@ namespace ranger { namespace event {
 			std::unique_ptr<evutil_socket_t, decltype(&fd_close)> fd_guard(&fd, fd_close);
 
 			auto acc = static_cast<tcp_acceptor*>(ctx)->shared_from_this();
-			auto conn = std::make_shared<tcp_connection>(evconnlistener_get_base(listener), fd);
 			auto handler = acc->get_event_handler();
-			if (handler)
-				handler->handle_accept(*acc, *conn);
-
-			fd_guard.release();
+			if (handler && handler->handle_accept(*acc, fd))
+				fd_guard.release();
 		}
 
 	}
 
 	tcp_acceptor::tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog)
 	{
-		//m_listener = evconnlistener_new_bind(disp._event_base(), handle_accept, this, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_THREADSAFE, backlog, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in));
 		m_listener = evconnlistener_new_bind(disp._event_base(), handle_accept, this, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, backlog, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in));
 		if (!m_listener)
 			throw std::runtime_error("evconnlistener create failed.");

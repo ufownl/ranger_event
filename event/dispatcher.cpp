@@ -29,30 +29,12 @@
 #include "dispatcher.hpp"
 #include <event2/event.h>
 #include <event2/thread.h>
-//#include <mutex>
 #include <stdexcept>
 
 namespace ranger { namespace event {
 
-	//namespace
-	//{
-
-	//	void start_up()
-	//	{
-	//		static std::once_flag flag;
-	//		std::call_once(flag, [] ()
-	//				{
-	//					if (evthread_use_pthreads() == -1)
-	//						throw std::runtime_error("evthread_use_pthreads call failed.");
-	//				});
-	//	}
-
-	//}
-
 	dispatcher::dispatcher()
 	{
-		//start_up();
-
 		m_base = event_base_new();
 		if (!m_base)
 			throw std::runtime_error("event_base create faild.");
