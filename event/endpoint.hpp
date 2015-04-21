@@ -32,6 +32,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string>
+#include <iostream>
 
 namespace ranger { namespace event {
 
@@ -61,6 +62,11 @@ namespace ranger { namespace event {
 	private:
 		sockaddr_in m_sin;
 	};
+
+	inline std::ostream& operator << (std::ostream& out, const endpoint& ep)
+	{
+		return out << ep.addr() << ":" << ep.port();
+	}
 
 } }
 

@@ -26,7 +26,7 @@ private:
 	{
 		auto local_ep = acc.local_endpoint();
 		auto remote_ep = conn.remote_endpoint();
-		std::cout << "acceptor[" << local_ep.addr() << ":" << local_ep.port() << "]" << " accept connection[" << remote_ep.addr() << ":" << remote_ep.port() << "]." << std::endl;
+		std::cout << "acceptor[" << local_ep << "]" << " accept connection[" << remote_ep << "]." << std::endl;
 
 		conn.set_event_handler(this);
 		m_conn_map[&conn] = conn.shared_from_this();
@@ -40,7 +40,7 @@ private:
 	void handle_timeout(ranger::event::tcp_connection& conn) final
 	{
 		auto ep = conn.remote_endpoint();
-		std::cerr << "connection[" << ep.addr() << ":" << ep.port() << "] " << "timeout." << std::endl;
+		std::cerr << "connection[" << ep << "] " << "timeout." << std::endl;
 
 		m_conn_map.erase(&conn);
 	}
@@ -48,7 +48,7 @@ private:
 	void handle_error(ranger::event::tcp_connection& conn) final
 	{
 		auto ep = conn.remote_endpoint();
-		std::cerr << "connection[" << ep.addr() << ":" << ep.port() << "] " << "error[" << conn.error_code() << "]: " << conn.error_description() << std::endl;
+		std::cerr << "connection[" << ep << "] " << "error[" << conn.error_code() << "]: " << conn.error_description() << std::endl;
 
 		m_conn_map.erase(&conn);
 	}
@@ -56,7 +56,7 @@ private:
 	void handle_eof(ranger::event::tcp_connection& conn) final
 	{
 		auto ep = conn.remote_endpoint();
-		std::cerr << "connection[" << ep.addr() << ":" << ep.port() << "] " << "eof." << std::endl;
+		std::cerr << "connection[" << ep << "] " << "eof." << std::endl;
 
 		m_conn_map.erase(&conn);
 	}

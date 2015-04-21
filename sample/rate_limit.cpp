@@ -32,13 +32,13 @@ private:
 	void handle_connected(ranger::event::tcp_connection& conn) final
 	{
 		auto ep = conn.remote_endpoint();
-		std::cout << "connection[" << ep.addr() << ":" << ep.port() << "] connected." << std::endl;
+		std::cout << "connection[" << ep << "] connected." << std::endl;
 	}
 
 	void handle_error(ranger::event::tcp_connection& conn) final
 	{
 		auto ep = conn.remote_endpoint();
-		std::cerr << "connection[" << ep.addr() << ":" << ep.port() << "] " << "error[" << conn.error_code() << "]: " << conn.error_description() << std::endl;
+		std::cerr << "connection[" << ep << "] " << "error[" << conn.error_code() << "]: " << conn.error_description() << std::endl;
 		conn.close();
 	}
 
