@@ -101,6 +101,8 @@ namespace ranger { namespace event {
 		static std::shared_ptr<tcp_connection> create(dispatcher& disp, int fd);
 		static std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > create_pair(dispatcher& first_disp, dispatcher& second_disp);
 		static std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > create_pair(dispatcher& disp);
+		
+		static void file_descriptor_close(int fd);
 
 		bool send(const void* src, size_t len);
 		bool send(buffer& src);

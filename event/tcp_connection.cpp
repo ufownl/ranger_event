@@ -105,6 +105,11 @@ namespace ranger { namespace event {
 		return create_pair(disp, disp);
 	}
 
+	void tcp_connection::file_descriptor_close(int fd)
+	{
+		evutil_closesocket(fd);
+	}
+
 	bool tcp_connection::send(const void* src, size_t len)
 	{
 		if (!m_top_bev)
