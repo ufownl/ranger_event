@@ -27,12 +27,12 @@ public:
 		auto conn = ranger::event::tcp_connection::create(m_disp, fd);
 		conn->set_event_handler(this);
 
+		fd_guard.release();
+
 		auto remote_ep = conn->remote_endpoint();
 		std::cout << "thread[" << std::this_thread::get_id() << "] " << "accept connection[" << remote_ep << "]." << std::endl;
 
 		m_conn_map[conn.get()] = conn;
-
-		fd_guard.release();
 	}
 	
 private:
