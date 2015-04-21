@@ -32,6 +32,7 @@
 #include "buffer.hpp"
 #include <event2/event.h>
 #include <event2/bufferevent.h>
+#include <netinet/tcp.h>
 #include <errno.h>
 #include <stdexcept>
 
@@ -186,6 +187,34 @@ namespace ranger { namespace event {
 			return 0;
 
 		return bufferevent_get_write_limit(m_base_bev);
+	}
+
+	void tcp_connection::set_nodelay(int val)
+	{
+		if (!m_base_bev)
+			return;
+
+		evutil_socket_t fd = bufferevent_getfd(m_base_bev);
+		if (fd == -1)
+			return;
+
+		setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&val, sizeof(val));
+	}
+
+	int tcp_connection::get_nodelay() const
+	{
+		if (!m_base_bev)
+			return false;
+
+		evutil_socket_t fd = bufferevent_getfd(m_base_bev);
+		if (fd == -1)
+			return false;
+
+		int val = 0;
+		socklen_t len = sizeof(val);
+		getsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&val, &len);
+
+		return val;
 	}
 
 	endpoint tcp_connection::remote_endpoint() const

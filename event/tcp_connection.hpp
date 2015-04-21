@@ -114,6 +114,9 @@ namespace ranger { namespace event {
 		ssize_t get_read_limit() const;
 		ssize_t get_write_limit() const;
 
+		void set_nodelay(int val);
+		int get_nodelay() const;
+
 		endpoint remote_endpoint() const;
 
 		static int error_code();
