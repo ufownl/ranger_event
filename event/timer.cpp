@@ -38,6 +38,7 @@ namespace ranger { namespace event {
 		if (m_event)
 		{
 			event_del(m_event);
+			event_free(m_event);
 		}
 	}
 
