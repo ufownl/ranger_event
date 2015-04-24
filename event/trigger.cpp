@@ -56,7 +56,6 @@ namespace ranger { namespace event {
 	{
 		if (m_event)
 		{
-			event_add(m_event, nullptr);
 			event_active(m_event, EV_WRITE, 0);
 		}
 	}
