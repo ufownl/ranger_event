@@ -2,15 +2,11 @@
 #include <event/tcp_acceptor.hpp>
 #include <event/tcp_connection.hpp>
 #include <event/buffer.hpp>
+#include <util/scope_guard.hpp>
 #include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <thread>
-
-void fd_close(int* fd)
-{
-	ranger::event::tcp_connection::file_descriptor_close(*fd);
-}
 
 class echo_server : public ranger::event::tcp_connection::event_handler
 {
@@ -22,12 +18,12 @@ public:
 
 	void take_fd(int fd)
 	{
-		std::unique_ptr<int, decltype(&fd_close)> fd_guard(&fd, fd_close);
+		ranger::util::scope_guard fd_guard([fd] () { ranger::event::tcp_connection::file_descriptor_close(fd); });
 		
 		auto conn = ranger::event::tcp_connection::create(m_disp, fd);
 		conn->set_event_handler(this);
 
-		fd_guard.release();
+		fd_guard.dismiss();
 
 		auto remote_ep = conn->remote_endpoint();
 		std::cout << "thread[" << std::this_thread::get_id() << "] " << "accept connection[" << remote_ep << "]." << std::endl;

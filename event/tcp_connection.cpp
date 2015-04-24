@@ -30,6 +30,7 @@
 #include "dispatcher.hpp"
 #include "endpoint.hpp"
 #include "buffer.hpp"
+#include "../util/scope_guard.hpp"
 #include <event2/event.h>
 #include <event2/bufferevent.h>
 #include <netinet/tcp.h>
@@ -64,16 +65,6 @@ namespace ranger { namespace event {
 		return std::make_shared<tcp_connection>(disp, fd);
 	}
 
-	namespace
-	{
-		
-		void fd_close(evutil_socket_t* fd)
-		{
-			evutil_closesocket(*fd);
-		}
-
-	}
-
 	std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > tcp_connection::create_pair(dispatcher& first_disp, dispatcher& second_disp)
 	{
 		evutil_socket_t fd_pair[2];
@@ -82,7 +73,8 @@ namespace ranger { namespace event {
 			throw std::runtime_error("evutil_socketpair call failed.");
 		}
 
-		std::unique_ptr<evutil_socket_t, decltype(&fd_close)> fd_guard_pair[2] { { &fd_pair[0], fd_close }, { &fd_pair[1], fd_close } };
+		util::scope_guard fd_first_guard([fd_pair] () { evutil_closesocket(fd_pair[0]); });
+		util::scope_guard fd_second_guard([fd_pair] () { evutil_closesocket(fd_pair[1]); });
 
 		for (auto fd: fd_pair)
 		{
@@ -91,10 +83,10 @@ namespace ranger { namespace event {
 		}
 
 		auto first_conn = create(first_disp, fd_pair[0]);
-		fd_guard_pair[0].release();
+		fd_first_guard.dismiss();
 
 		auto second_conn = create(second_disp, fd_pair[1]);
-		fd_guard_pair[1].release();
+		fd_second_guard.dismiss();
 
 		return std::make_pair(std::move(first_conn), std::move(second_conn));
 	}

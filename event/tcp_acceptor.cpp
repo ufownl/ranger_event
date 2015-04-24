@@ -30,6 +30,7 @@
 #include "dispatcher.hpp"
 #include "endpoint.hpp"
 #include "tcp_connection.hpp"
+#include "../util/scope_guard.hpp"
 #include <event2/listener.h>
 #include <stdexcept>
 
@@ -63,19 +64,14 @@ namespace ranger { namespace event {
 
 	namespace
 	{
-		void fd_close(evutil_socket_t* fd)
-		{
-			evutil_closesocket(*fd);
-		}
-
 		void handle_accept(evconnlistener* listener, evutil_socket_t fd, sockaddr* addr, int socklen, void* ctx)
 		{
-			std::unique_ptr<evutil_socket_t, decltype(&fd_close)> fd_guard(&fd, fd_close);
+			util::scope_guard fd_guard([fd] () { evutil_closesocket(fd); });
 
 			auto acc = static_cast<tcp_acceptor*>(ctx)->shared_from_this();
 			auto handler = acc->get_event_handler();
 			if (handler && handler->handle_accept(*acc, fd))
-				fd_guard.release();
+				fd_guard.dismiss();
 		}
 
 	}
