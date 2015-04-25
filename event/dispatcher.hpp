@@ -44,28 +44,10 @@ namespace ranger { namespace event {
 		dispatcher(const dispatcher&) = delete;
 		dispatcher& operator = (const dispatcher&) = delete;
 
-		dispatcher(dispatcher&& rhs) : m_base(rhs.m_base) { rhs.m_base = nullptr; }
-		dispatcher& operator = (dispatcher&& rhs)
-		{
-			if (this != &rhs)
-			{
-				dispatcher disp = std::move(rhs);
-				swap(disp);
-			}
-
-			return *this;
-		}
-
 		int run();
 		int run_once(bool is_block = true);
 		void exit(float delay = 0.0f);
 		void kill();
-
-		void swap(dispatcher& rhs)
-		{
-			using std::swap;
-			swap(m_base, rhs.m_base);
-		}
 
 #ifdef RANGER_EVENT_INTERNAL
 	public:
@@ -77,11 +59,6 @@ namespace ranger { namespace event {
 	private:
 		event_base* m_base;
 	};
-
-	inline void swap(dispatcher& lhs, dispatcher& rhs)
-	{
-		lhs.swap(rhs);
-	}
 
 } }
 
