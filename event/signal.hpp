@@ -50,24 +50,6 @@ namespace ranger { namespace event {
 		signal(const signal&) = delete;
 		signal& operator = (const signal&) = delete;
 
-		signal(signal&& rhs)
-			: m_event(rhs.m_event)
-			, m_event_handler(std::move(rhs.m_event_handler))
-		{
-			m_event = nullptr;
-		}
-
-		signal& operator = (signal&& rhs)
-		{
-			if (this != &rhs)
-			{
-				signal ev = std::move(rhs);
-				swap(ev);
-			}
-
-			return *this;
-		}
-
 		static std::shared_ptr<signal> create(dispatcher& disp, int sig, const event_handler& handler);
 		static std::shared_ptr<signal> create(dispatcher& disp, int sig, event_handler&& handler);
 
@@ -76,13 +58,6 @@ namespace ranger { namespace event {
 
 		const event_handler& get_event_handler() const { return m_event_handler; }
 
-		void swap(signal& rhs)
-		{
-			using std::swap;
-			swap(m_event, rhs.m_event);
-			swap(m_event_handler, rhs.m_event_handler);
-		}
-
 #ifdef RANGER_EVENT_INTERNAL
 	public:
 #else
@@ -90,6 +65,14 @@ namespace ranger { namespace event {
 #endif	// RANGER_EVENT_INTERNAL
 		signal(dispatcher& disp, int sig, const event_handler& handler);
 		signal(dispatcher& disp, int sig, event_handler&& handler);
+
+	private:
+		signal(signal&& rhs)
+			: m_event(rhs.m_event)
+			, m_event_handler(std::move(rhs.m_event_handler))
+		{
+			rhs.m_event = nullptr;
+		}
 
 		void _init(event_base* base, int sig);
 

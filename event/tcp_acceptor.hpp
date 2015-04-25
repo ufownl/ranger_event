@@ -53,25 +53,6 @@ namespace ranger { namespace event {
 		tcp_acceptor(const tcp_acceptor&) = delete;
 		tcp_acceptor& operator = (const tcp_acceptor&) = delete;
 
-		tcp_acceptor(tcp_acceptor&& rhs)
-			: m_listener(rhs.m_listener)
-			, m_event_handler(rhs.m_event_handler)
-		{
-			rhs.m_listener = nullptr;
-			rhs.m_event_handler = nullptr;
-		}
-
-		tcp_acceptor& operator = (tcp_acceptor&& rhs)
-		{
-			if (this != &rhs)
-			{
-				tcp_acceptor acc = std::move(rhs);
-				swap(acc);
-			}
-
-			return *this;
-		}
-
 		static std::shared_ptr<tcp_acceptor> create(dispatcher& disp, const endpoint& ep, int backlog = -1);
 
 		endpoint local_endpoint() const;
@@ -81,13 +62,6 @@ namespace ranger { namespace event {
 
 		void close() { tcp_acceptor(std::move(*this)); }
 
-		void swap(tcp_acceptor& rhs)
-		{
-			using std::swap;
-			swap(m_listener, rhs.m_listener);
-			swap(m_event_handler, rhs.m_event_handler);
-		}
-
 #ifdef RANGER_EVENT_INTERNAL
 	public:
 #else
@@ -96,14 +70,18 @@ namespace ranger { namespace event {
 		tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog);
 
 	private:
+		tcp_acceptor(tcp_acceptor&& rhs)
+			: m_listener(rhs.m_listener)
+			, m_event_handler(rhs.m_event_handler)
+		{
+			rhs.m_listener = nullptr;
+			rhs.m_event_handler = nullptr;
+		}
+
+	private:
 		evconnlistener* m_listener;
 		event_handler* m_event_handler = nullptr;
 	};
-
-	inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs)
-	{
-		lhs.swap(rhs);
-	}
 
 } }
 

@@ -43,25 +43,7 @@ namespace ranger { namespace event {
 		token_bucket_cfg(const token_bucket_cfg&) = delete;
 		token_bucket_cfg& operator = (const token_bucket_cfg&) = delete;
 
-		token_bucket_cfg(token_bucket_cfg&& rhs) : m_cfg(rhs.m_cfg) { rhs.m_cfg = nullptr; }
-		token_bucket_cfg& operator = (token_bucket_cfg&& rhs)
-		{
-			if (this != &rhs)
-			{
-				token_bucket_cfg cfg = std::move(rhs);
-				swap(cfg);
-			}
-
-			return *this;
-		}
-
 		static std::shared_ptr<token_bucket_cfg> create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, float period = 0.0f);
-
-		void swap(token_bucket_cfg& rhs)
-		{
-			using std::swap;
-			swap(m_cfg, rhs.m_cfg);
-		}
 
 #ifdef RANGER_EVENT_INTERNAL
 	public:
@@ -75,11 +57,6 @@ namespace ranger { namespace event {
 	private:
 		ev_token_bucket_cfg* m_cfg;
 	};
-
-	inline void swap(token_bucket_cfg& lhs, token_bucket_cfg& rhs)
-	{
-		lhs.swap(rhs);
-	}
 
 } }
 
