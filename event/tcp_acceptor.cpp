@@ -79,4 +79,10 @@ namespace ranger { namespace event {
 		return endpoint(sin);
 	}
 
+	void tcp_acceptor::_reset_callbacks()
+	{
+		if (m_listener)
+			evconnlistener_set_cb(m_listener, handle_accept, this);
+	}
+
 } }
