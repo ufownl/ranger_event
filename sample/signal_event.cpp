@@ -14,14 +14,15 @@ int main(int argc, char* argv[])
 	size_t tick_cnt = atoi(argv[2]);
 
 	ranger::event::dispatcher disp;
-	auto sig = ranger::event::signal::create(disp, sig_num, [sig_num, &tick_cnt] (ranger::event::signal& sig)
+	ranger::event::signal sig(disp, sig_num, [sig_num, &tick_cnt] (ranger::event::signal& sig)
 			{
 				if (tick_cnt-- > 0)
 				{
-					std::cout << "signal: " << sig_num << std::endl;
+					std::cout << "signal: " << sig_num << " tick: " << tick_cnt << std::endl;
 					sig.active();
 				}
 			});
-	sig->active();
+	sig.active();
+
 	return disp.run();
 }

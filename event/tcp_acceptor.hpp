@@ -29,7 +29,7 @@
 #ifndef RANGER_EVENT_TCP_ACCEPTOR_HPP
 #define RANGER_EVENT_TCP_ACCEPTOR_HPP
 
-#include <memory>
+#include <utility>
 
 struct evconnlistener;
 
@@ -39,7 +39,7 @@ namespace ranger { namespace event {
 	class endpoint;
 	class tcp_connection;
 
-	class tcp_acceptor : public std::enable_shared_from_this<tcp_acceptor>
+	class tcp_acceptor
 	{
 	public:
 		struct event_handler
@@ -48,12 +48,11 @@ namespace ranger { namespace event {
 		};
 
 	public:
+		tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog = -1);
 		~tcp_acceptor();
 
 		tcp_acceptor(const tcp_acceptor&) = delete;
 		tcp_acceptor& operator = (const tcp_acceptor&) = delete;
-
-		static std::shared_ptr<tcp_acceptor> create(dispatcher& disp, const endpoint& ep, int backlog = -1);
 
 		endpoint local_endpoint() const;
 
@@ -61,13 +60,6 @@ namespace ranger { namespace event {
 		event_handler* get_event_handler() const { return m_event_handler; }
 
 		void close() { tcp_acceptor(std::move(*this)); }
-
-#ifdef RANGER_EVENT_INTERNAL
-	public:
-#else
-	private:
-#endif	// RANGER_EVENT_INTERNAL
-		tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog);
 
 	private:
 		tcp_acceptor(tcp_acceptor&& rhs)

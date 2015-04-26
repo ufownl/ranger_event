@@ -29,7 +29,6 @@
 #ifndef RANGER_EVENT_TIMER_HPP
 #define RANGER_EVENT_TIMER_HPP
 
-#include <memory>
 #include <functional>
 
 struct event;
@@ -39,32 +38,32 @@ namespace ranger { namespace event {
 
 	class dispatcher;
 
-	class timer : public std::enable_shared_from_this<timer>
+	class timer
 	{
 	public:
 		using event_handler = std::function<void(timer&)>;
 
 	public:
+		timer(dispatcher& disp);
+
+		template <class T>
+		timer(dispatcher& disp, T&& handler)
+			: timer(disp)
+		{
+			m_event_handler = std::forward<T>(handler);
+		}
+
 		~timer();
 
 		timer(const timer&) = delete;
 		timer& operator = (const timer&) = delete;
 
-		static std::shared_ptr<timer> create(dispatcher& disp, const event_handler& handler);
-		static std::shared_ptr<timer> create(dispatcher& disp, event_handler&& handler);
+		template <class T>
+		void set_event_handler(T&& handler) { m_event_handler = std::forward<T>(handler); }
+		const event_handler& get_event_handler() const { return m_event_handler; }
 
 		void active(float duration);
 		void close() { timer(std::move(*this)); }
-
-		const event_handler& get_event_handler() const { return m_event_handler; }
-
-#ifdef RANGER_EVENT_INTERNAL
-	public:
-#else
-	private:
-#endif	// RANGER_EVENT_INTERNAL
-		timer(dispatcher& disp, const event_handler& handler);
-		timer(dispatcher& disp, event_handler&& handler);
 
 	private:
 		timer(timer&& rhs)

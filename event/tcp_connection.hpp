@@ -45,7 +45,7 @@ namespace ranger { namespace event {
 	class buffer;
 	class dispatcher;
 
-	class tcp_connection : public std::enable_shared_from_this<tcp_connection>
+	class tcp_connection
 	{
 	public:
 		struct event_handler
@@ -66,6 +66,11 @@ namespace ranger { namespace event {
 		};
 
 	public:
+		tcp_connection() : m_top_bev(nullptr), m_base_bev(nullptr) {}
+		tcp_connection(dispatcher& disp, const endpoint& ep);
+		tcp_connection(dispatcher& disp, const char* addr, int port);
+		tcp_connection(dispatcher& disp, const std::string& addr, int port);
+		tcp_connection(dispatcher& disp, int fd);
 		~tcp_connection();
 
 		tcp_connection(const tcp_connection&) = delete;
@@ -97,13 +102,8 @@ namespace ranger { namespace event {
 			return *this;
 		}
 		
-		static std::shared_ptr<tcp_connection> create(dispatcher& disp, const endpoint& ep);
-		static std::shared_ptr<tcp_connection> create(dispatcher& disp, const char* addr, int port);
-		static std::shared_ptr<tcp_connection> create(dispatcher& disp, const std::string& addr, int port);
-		static std::shared_ptr<tcp_connection> create(dispatcher& disp, int fd);
-		static std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > create_pair(dispatcher& first_disp, dispatcher& second_disp);
-		static std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > create_pair(dispatcher& disp);
-		
+		static std::pair<tcp_connection, tcp_connection> create_pair(dispatcher& first_disp, dispatcher& second_disp);
+		static std::pair<tcp_connection, tcp_connection> create_pair(dispatcher& disp);
 		static void file_descriptor_close(int fd);
 
 		bool send(const void* src, size_t len);
@@ -111,7 +111,7 @@ namespace ranger { namespace event {
 
 		void set_timeouts(float read_timeout, float write_timeout);
 
-		void set_rate_limit(const token_bucket_cfg& cfg);
+		void set_rate_limit(std::shared_ptr<const token_bucket_cfg> cfg);
 		void reset_rate_limit();
 		bool decrement_read_limit(ssize_t decr);
 		bool decrement_write_limit(ssize_t decr);
@@ -122,6 +122,7 @@ namespace ranger { namespace event {
 		void set_nodelay(int val);
 		int get_nodelay() const;
 
+		int file_descriptor() const;
 		endpoint remote_endpoint() const;
 
 		static int error_code();
@@ -155,16 +156,6 @@ namespace ranger { namespace event {
 			rhs._reset_callbacks();
 		}
 		
-#ifdef RANGER_EVENT_INTERNAL
-	public:
-#else
-	private:
-#endif	// RANGER_EVENT_INTERNAL
-		tcp_connection(dispatcher& disp, const endpoint& ep);
-		tcp_connection(dispatcher& disp, const char* addr, int port);
-		tcp_connection(dispatcher& disp, const std::string& addr, int port);
-		tcp_connection(dispatcher& disp, int fd);
-
 	private:
 		explicit tcp_connection(bufferevent* bev);
 

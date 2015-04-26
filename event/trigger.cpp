@@ -33,42 +33,21 @@
 
 namespace ranger { namespace event {
 
+	trigger::trigger(dispatcher& disp)
+	{
+		_init(disp._event_base());
+	}
+
 	trigger::~trigger()
 	{
 		if (m_event)
-		{
 			event_free(m_event);
-		}
-	}
-
-	std::shared_ptr<trigger> trigger::create(dispatcher& disp, const event_handler& handler)
-	{
-		return std::make_shared<trigger>(disp, handler);
-	}
-
-	std::shared_ptr<trigger> trigger::create(dispatcher& disp, event_handler&& handler)
-	{
-		return std::make_shared<trigger>(disp, std::move(handler));
 	}
 
 	void trigger::active()
 	{
 		if (m_event)
-		{
 			event_active(m_event, EV_WRITE, 0);
-		}
-	}
-
-	trigger::trigger(dispatcher& disp, const event_handler& handler)
-		: m_event_handler(handler)
-	{
-		_init(disp._event_base());
-	}
-
-	trigger::trigger(dispatcher& disp, event_handler&& handler)
-		: m_event_handler(std::move(handler))
-	{
-		_init(disp._event_base());
 	}
 
 	namespace
@@ -76,12 +55,10 @@ namespace ranger { namespace event {
 
 		void handle_touch(evutil_socket_t fd, short what, void* ctx)
 		{
-			auto tr = static_cast<trigger*>(ctx)->shared_from_this();
+			auto tr = static_cast<trigger*>(ctx);
 			auto& handler = tr->get_event_handler();
 			if (handler)
-			{
 				handler(*tr);
-			}
 		}
 
 	}

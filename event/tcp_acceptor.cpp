@@ -36,15 +36,32 @@
 
 namespace ranger { namespace event {
 
+	namespace
+	{
+
+		void handle_accept(evconnlistener* listener, evutil_socket_t fd, sockaddr* addr, int socklen, void* ctx)
+		{
+			util::scope_guard fd_guard([fd] () { evutil_closesocket(fd); });
+
+			auto acc = static_cast<tcp_acceptor*>(ctx);
+			auto handler = acc->get_event_handler();
+			if (handler && handler->handle_accept(*acc, fd))
+				fd_guard.dismiss();
+		}
+
+	}
+
+	tcp_acceptor::tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog /* = -1 */)
+	{
+		m_listener = evconnlistener_new_bind(disp._event_base(), handle_accept, this, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, backlog, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in));
+		if (!m_listener)
+			throw std::runtime_error("evconnlistener create failed.");
+	}
+
 	tcp_acceptor::~tcp_acceptor()
 	{
 		if (m_listener)
 			evconnlistener_free(m_listener);
-	}
-
-	std::shared_ptr<tcp_acceptor> tcp_acceptor::create(dispatcher& disp, const endpoint& ep, int backlog /* = -1 */)
-	{
-		return std::make_shared<tcp_acceptor>(disp, ep, backlog);
 	}
 
 	endpoint tcp_acceptor::local_endpoint() const
@@ -60,28 +77,6 @@ namespace ranger { namespace event {
 		socklen_t len = sizeof(sin);
 		getsockname(fd, (sockaddr*)&sin, &len);
 		return endpoint(sin);
-	}
-
-	namespace
-	{
-
-		void handle_accept(evconnlistener* listener, evutil_socket_t fd, sockaddr* addr, int socklen, void* ctx)
-		{
-			util::scope_guard fd_guard([fd] () { evutil_closesocket(fd); });
-
-			auto acc = static_cast<tcp_acceptor*>(ctx)->shared_from_this();
-			auto handler = acc->get_event_handler();
-			if (handler && handler->handle_accept(*acc, fd))
-				fd_guard.dismiss();
-		}
-
-	}
-
-	tcp_acceptor::tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog)
-	{
-		m_listener = evconnlistener_new_bind(disp._event_base(), handle_accept, this, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, backlog, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in));
-		if (!m_listener)
-			throw std::runtime_error("evconnlistener create failed.");
 	}
 
 } }

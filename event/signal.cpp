@@ -33,22 +33,17 @@
 
 namespace ranger { namespace event {
 
+	signal::signal(dispatcher& disp, int sig)
+	{
+		_init(disp._event_base(), sig);
+	}
+
 	signal::~signal()
 	{
 		if (m_event)
 		{
 			event_free(m_event);
 		}
-	}
-
-	std::shared_ptr<signal> signal::create(dispatcher& disp, int sig, const event_handler& handler)
-	{
-		return std::make_shared<signal>(disp, sig, handler);
-	}
-
-	std::shared_ptr<signal> signal::create(dispatcher& disp, int sig, event_handler&& handler)
-	{
-		return std::make_shared<signal>(disp, sig, std::move(handler));
 	}
 
 	void signal::active()
@@ -59,24 +54,12 @@ namespace ranger { namespace event {
 		}
 	}
 
-	signal::signal(dispatcher& disp, int sig, const event_handler& handler)
-		: m_event_handler(handler)
-	{
-		_init(disp._event_base(), sig);
-	}
-
-	signal::signal(dispatcher& disp, int sig, event_handler&& handler)
-		: m_event_handler(std::move(handler))
-	{
-		_init(disp._event_base(), sig);
-	}
-
 	namespace
 	{
 
 		void handle_signal(evutil_socket_t fd, short what, void* ctx)
 		{
-			auto sig = static_cast<signal*>(ctx)->shared_from_this();
+			auto sig = static_cast<signal*>(ctx);
 			auto& handler = sig->get_event_handler();
 			if (handler)
 			{

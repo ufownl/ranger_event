@@ -38,9 +38,9 @@ namespace ranger { namespace event {
 			ev_token_bucket_cfg_free(m_cfg);
 	}
 
-	std::shared_ptr<token_bucket_cfg> token_bucket_cfg::create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, float period /* = 0.0f */)
+	std::shared_ptr<const token_bucket_cfg> token_bucket_cfg::create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, float period /* = 0.0f */)
 	{
-		return std::make_shared<token_bucket_cfg>(read_rate, read_burst, write_rate, write_burst, period);
+		return std::make_shared<const token_bucket_cfg>(read_rate, read_burst, write_rate, write_burst, period);
 	}
 
 	token_bucket_cfg::token_bucket_cfg(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, float period)

@@ -33,22 +33,15 @@
 
 namespace ranger { namespace event {
 
+	timer::timer(dispatcher& disp)
+	{
+		_init(disp._event_base());
+	}
+
 	timer::~timer()
 	{
 		if (m_event)
-		{
 			event_free(m_event);
-		}
-	}
-
-	std::shared_ptr<timer> timer::create(dispatcher& disp, const event_handler& handler)
-	{
-		return std::make_shared<timer>(disp, handler);
-	}
-
-	std::shared_ptr<timer> timer::create(dispatcher& disp, event_handler&& handler)
-	{
-		return std::make_shared<timer>(disp, std::move(handler));
 	}
 
 	void timer::active(float duration)
@@ -63,29 +56,15 @@ namespace ranger { namespace event {
 		}
 	}
 
-	timer::timer(dispatcher& disp, const event_handler& handler)
-		: m_event_handler(handler)
-	{
-		_init(disp._event_base());
-	}
-
-	timer::timer(dispatcher& disp, event_handler&& handler)
-		: m_event_handler(std::move(handler))
-	{
-		_init(disp._event_base());
-	}
-
 	namespace
 	{
 
 		void handle_expire(evutil_socket_t fd, short what, void* ctx)
 		{
-			auto tmr = static_cast<timer*>(ctx)->shared_from_this();
+			auto tmr = static_cast<timer*>(ctx);
 			auto& handler = tmr->get_event_handler();
 			if (handler)
-			{
 				handler(*tmr);
-			}
 		}
 
 	}

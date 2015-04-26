@@ -29,7 +29,6 @@
 #ifndef RANGER_EVENT_TRIGGER_HPP
 #define RANGER_EVENT_TRIGGER_HPP
 
-#include <memory>
 #include <functional>
 
 struct event;
@@ -39,32 +38,32 @@ namespace ranger { namespace event {
 
 	class dispatcher;
 
-	class signal : public std::enable_shared_from_this<signal>
+	class signal
 	{
 	public:
 		using event_handler = std::function<void(signal&)>;
 
 	public:
+		signal(dispatcher& disp, int sig);
+
+		template <class T>
+		signal(dispatcher& disp, int sig, T&& handler)
+			: signal(disp, sig)
+		{
+			m_event_handler = std::forward<T>(handler);
+		}
+
 		~signal();
 
 		signal(const signal&) = delete;
 		signal& operator = (const signal&) = delete;
 
-		static std::shared_ptr<signal> create(dispatcher& disp, int sig, const event_handler& handler);
-		static std::shared_ptr<signal> create(dispatcher& disp, int sig, event_handler&& handler);
+		template <class T>
+		void set_event_handler(T&& handler) { m_event_handler = std::forward<T>(handler); }
+		const event_handler& get_event_handler() const { return m_event_handler; }
 
 		void active();
 		void close() { signal(std::move(*this)); }
-
-		const event_handler& get_event_handler() const { return m_event_handler; }
-
-#ifdef RANGER_EVENT_INTERNAL
-	public:
-#else
-	private:
-#endif	// RANGER_EVENT_INTERNAL
-		signal(dispatcher& disp, int sig, const event_handler& handler);
-		signal(dispatcher& disp, int sig, event_handler&& handler);
 
 	private:
 		signal(signal&& rhs)

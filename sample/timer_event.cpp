@@ -14,14 +14,15 @@ int main(int argc, char* argv[])
 	int tick_cnt = atoi(argv[2]);
 
 	ranger::event::dispatcher disp;
-	auto tmr = ranger::event::timer::create(disp, [period, &tick_cnt] (ranger::event::timer& tmr)
+	ranger::event::timer tmr(disp, [period, &tick_cnt] (ranger::event::timer& tmr)
 			{
 				if (tick_cnt-- > 0)
 				{
-					std::cout << "Tick." << std::endl;
+					std::cout << "tick: " << tick_cnt << std::endl;
 					tmr.active(period);
 				}
 			});
-	tmr->active(period);
+	tmr.active(period);
+
 	return disp.run();
 }

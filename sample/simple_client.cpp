@@ -7,15 +7,15 @@ class simple_client : public ranger::event::tcp_connection::event_handler
 {
 public:
 	simple_client(const char* addr, int port)
-		: m_conn(ranger::event::tcp_connection::create(m_disp, addr, port))
+		: m_conn(m_disp, addr, port)
 	{
-		m_conn->set_event_handler(this);
+		m_conn.set_event_handler(this);
 	}
 
 	int run()
 	{
 		char content[] = "GET / HTTP/1.1\r\n\r\n";
-		m_conn->send(content, strlen(content));
+		m_conn.send(content, strlen(content));
 		return m_disp.run();
 	}
 
@@ -44,7 +44,7 @@ private:
 
 private:
 	ranger::event::dispatcher m_disp;
-	std::shared_ptr<ranger::event::tcp_connection> m_conn;
+	ranger::event::tcp_connection m_conn;
 };
 
 int main(int argc, char* argv[])

@@ -39,33 +39,43 @@
 
 namespace ranger { namespace event {
 
+	tcp_connection::tcp_connection(dispatcher& disp, const endpoint& ep)
+		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
+	{
+		if (bufferevent_socket_connect(m_base_bev, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in)) == -1)
+		{
+			bufferevent_free(m_top_bev);
+			throw std::runtime_error("bufferevent_socket_connect call failed.");
+		}
+	}
+
+	tcp_connection::tcp_connection(dispatcher& disp, const char* addr, int port)
+		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
+	{
+		if (bufferevent_socket_connect_hostname(m_base_bev, 0, AF_UNSPEC, addr, port) == -1)
+		{
+			bufferevent_free(m_top_bev);
+			throw std::runtime_error("bufferevent_socket_connect_hostname call failed.");
+		}
+	}
+
+	tcp_connection::tcp_connection(dispatcher& disp, const std::string& addr, int port)
+		: tcp_connection(disp, addr.c_str(), port)
+	{
+	}
+
+	tcp_connection::tcp_connection(dispatcher& disp, int fd)
+		: tcp_connection(bufferevent_socket_new(disp._event_base(), fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
+	{
+	}
+
 	tcp_connection::~tcp_connection()
 	{
 		if (m_top_bev)
 			bufferevent_free(m_top_bev);
 	}
 
-	std::shared_ptr<tcp_connection> tcp_connection::create(dispatcher& disp, const endpoint& ep)
-	{
-		return std::make_shared<tcp_connection>(disp, ep);
-	}
-
-	std::shared_ptr<tcp_connection> tcp_connection::create(dispatcher& disp, const char* addr, int port)
-	{
-		return std::make_shared<tcp_connection>(disp, addr, port);
-	}
-
-	std::shared_ptr<tcp_connection> tcp_connection::create(dispatcher& disp, const std::string& addr, int port)
-	{
-		return std::make_shared<tcp_connection>(disp, addr, port);
-	}
-
-	std::shared_ptr<tcp_connection> tcp_connection::create(dispatcher& disp, int fd)
-	{
-		return std::make_shared<tcp_connection>(disp, fd);
-	}
-
-	std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > tcp_connection::create_pair(dispatcher& first_disp, dispatcher& second_disp)
+	std::pair<tcp_connection, tcp_connection> tcp_connection::create_pair(dispatcher& first_disp, dispatcher& second_disp)
 	{
 		evutil_socket_t fd_pair[2];
 		if (evutil_socketpair(AF_LOCAL, SOCK_STREAM, 0, fd_pair) == -1)
@@ -82,16 +92,16 @@ namespace ranger { namespace event {
 				throw std::runtime_error("evutil_make_socket_nonblocking call failed.");
 		}
 
-		auto first_conn = create(first_disp, fd_pair[0]);
+		ranger::event::tcp_connection first_conn(first_disp, fd_pair[0]);
 		fd_first_guard.dismiss();
 
-		auto second_conn = create(second_disp, fd_pair[1]);
+		ranger::event::tcp_connection second_conn(second_disp, fd_pair[1]);
 		fd_second_guard.dismiss();
 
 		return std::make_pair(std::move(first_conn), std::move(second_conn));
 	}
 
-	std::pair<std::shared_ptr<tcp_connection>, std::shared_ptr<tcp_connection> > tcp_connection::create_pair(dispatcher& disp)
+	std::pair<tcp_connection, tcp_connection> tcp_connection::create_pair(dispatcher& disp)
 	{
 		return create_pair(disp, disp);
 	}
@@ -140,12 +150,12 @@ namespace ranger { namespace event {
 		}
 	}
 
-	void tcp_connection::set_rate_limit(const token_bucket_cfg& cfg)
+	void tcp_connection::set_rate_limit(std::shared_ptr<const token_bucket_cfg> cfg)
 	{
 		if (m_base_bev)
 		{
-			bufferevent_set_rate_limit(m_base_bev, cfg._ev_token_bucket_cfg());
-			m_token_bucket = cfg.shared_from_this();
+			bufferevent_set_rate_limit(m_base_bev, cfg->_ev_token_bucket_cfg());
+			m_token_bucket = std::move(cfg);
 		}
 	}
 
@@ -218,12 +228,17 @@ namespace ranger { namespace event {
 		return val;
 	}
 
-	endpoint tcp_connection::remote_endpoint() const
+	int tcp_connection::file_descriptor() const
 	{
 		if (!m_base_bev)
-			return endpoint();
+			return -1;
 
-		evutil_socket_t fd = bufferevent_getfd(m_base_bev);
+		return bufferevent_getfd(m_base_bev);
+	}
+
+	endpoint tcp_connection::remote_endpoint() const
+	{
+		evutil_socket_t fd = file_descriptor();
 		if (fd == -1)
 			return endpoint();
 
@@ -241,36 +256,6 @@ namespace ranger { namespace event {
 	const char* tcp_connection::error_description()
 	{
 		return evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR());
-	}
-
-	tcp_connection::tcp_connection(dispatcher& disp, const endpoint& ep)
-		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
-	{
-		if (bufferevent_socket_connect(m_base_bev, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in)) == -1)
-		{
-			bufferevent_free(m_top_bev);
-			throw std::runtime_error("bufferevent_socket_connect call failed.");
-		}
-	}
-
-	tcp_connection::tcp_connection(dispatcher& disp, const char* addr, int port)
-		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
-	{
-		if (bufferevent_socket_connect_hostname(m_base_bev, 0, AF_UNSPEC, addr, port) == -1)
-		{
-			bufferevent_free(m_top_bev);
-			throw std::runtime_error("bufferevent_socket_connect_hostname call failed.");
-		}
-	}
-
-	tcp_connection::tcp_connection(dispatcher& disp, const std::string& addr, int port)
-		: tcp_connection(disp, addr.c_str(), port)
-	{
-	}
-
-	tcp_connection::tcp_connection(dispatcher& disp, int fd)
-		: tcp_connection(bufferevent_socket_new(disp._event_base(), fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
-	{
 	}
 
 	tcp_connection::tcp_connection(bufferevent* bev)
@@ -320,7 +305,7 @@ namespace ranger { namespace event {
 
 		void handle_read(bufferevent* bev, void* ctx)
 		{
-			auto conn = static_cast<tcp_connection*>(ctx)->shared_from_this();
+			auto conn = static_cast<tcp_connection*>(ctx);
 			auto handler = conn->get_event_handler();
 			if (handler)
 				handler->handle_read(*conn, buffer(bufferevent_get_input(bev)));
@@ -328,7 +313,7 @@ namespace ranger { namespace event {
 
 		void handle_write(bufferevent* bev, void* ctx)
 		{
-			auto conn = static_cast<tcp_connection*>(ctx)->shared_from_this();
+			auto conn = static_cast<tcp_connection*>(ctx);
 			auto handler = conn->get_event_handler();
 			if (handler)
 				handler->handle_write(*conn, buffer(bufferevent_get_output(bev)));
@@ -336,7 +321,7 @@ namespace ranger { namespace event {
 
 		void handle_event(bufferevent* bev, short what, void* ctx)
 		{
-			auto conn = static_cast<tcp_connection*>(ctx)->shared_from_this();
+			auto conn = static_cast<tcp_connection*>(ctx);
 			auto handler = conn->get_event_handler();
 			if (handler)
 			{

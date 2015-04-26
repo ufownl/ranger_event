@@ -10,14 +10,14 @@ public:
 	explicit connection_pair(size_t cnt)
 		: m_cnt(cnt * 2)
 	{
-		m_conn_pair.first->set_event_handler(this);
-		m_conn_pair.second->set_event_handler(this);
+		m_conn_pair.first.set_event_handler(this);
+		m_conn_pair.second.set_event_handler(this);
 	}
 
 	int run()
 	{
 		char msg[] = "Hello, world!\n";
-		m_conn_pair.first->send(msg, strlen(msg));
+		m_conn_pair.first.send(msg, strlen(msg));
 		return m_disp.run();
 	}
 
@@ -33,16 +33,16 @@ private:
 		}
 		else
 		{
-			m_conn_pair.first.reset();
-			m_conn_pair.second.reset();
+			m_conn_pair.first.close();
+			m_conn_pair.second.close();
 		}
 	}
 
 private:
 	ranger::event::dispatcher m_disp;
 	std::pair<
-		std::shared_ptr<ranger::event::tcp_connection>,
-		std::shared_ptr<ranger::event::tcp_connection>
+		ranger::event::tcp_connection,
+		ranger::event::tcp_connection
 	> m_conn_pair = ranger::event::tcp_connection::create_pair(m_disp);
 	size_t m_cnt;
 };

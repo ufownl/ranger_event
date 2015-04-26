@@ -20,15 +20,15 @@ public:
 	{
 		ranger::util::scope_guard fd_guard([fd] () { ranger::event::tcp_connection::file_descriptor_close(fd); });
 		
-		auto conn = ranger::event::tcp_connection::create(m_disp, fd);
-		conn->set_event_handler(this);
+		ranger::event::tcp_connection conn(m_disp, fd);
+		conn.set_event_handler(this);
 
 		fd_guard.dismiss();
 
-		auto remote_ep = conn->remote_endpoint();
+		auto remote_ep = conn.remote_endpoint();
 		std::cout << "thread[" << std::this_thread::get_id() << "] " << "accept connection[" << remote_ep << "]." << std::endl;
 
-		m_conn_map[conn.get()] = conn;
+		m_conn_map.emplace(conn.file_descriptor(), std::move(conn));
 	}
 	
 private:
@@ -43,7 +43,7 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "thread[" << std::this_thread::get_id() << "] " << "connection[" << ep << "] " << "timeout." << std::endl;
 
-		m_conn_map.erase(&conn);
+		m_conn_map.erase(conn.file_descriptor());
 	}
 
 	void handle_error(ranger::event::tcp_connection& conn) final
@@ -51,7 +51,7 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "thread[" << std::this_thread::get_id() << "] " << "connection[" << ep << "] " << "error[" << conn.error_code() << "]: " << conn.error_description() << std::endl;
 
-		m_conn_map.erase(&conn);
+		m_conn_map.erase(conn.file_descriptor());
 	}
 
 	void handle_eof(ranger::event::tcp_connection& conn) final
@@ -59,12 +59,12 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "thread[" << std::this_thread::get_id() << "] " << "connection[" << ep << "] " << "eof." << std::endl;
 
-		m_conn_map.erase(&conn);
+		m_conn_map.erase(conn.file_descriptor());
 	}
 
 private:
 	ranger::event::dispatcher& m_disp;
-	std::unordered_map<ranger::event::tcp_connection*, std::shared_ptr<ranger::event::tcp_connection> > m_conn_map;
+	std::unordered_map<int, ranger::event::tcp_connection> m_conn_map;
 };
 
 class worker : public ranger::event::tcp_connection::event_handler
@@ -77,23 +77,20 @@ public:
 
 	ranger::event::dispatcher& event_dispatcher() { return m_disp; }
 
-	void set_external_connection(std::shared_ptr<ranger::event::tcp_connection> conn)
+	void set_external_connection(ranger::event::tcp_connection&& conn)
 	{
 		m_external_conn = std::move(conn);
 	}
 
-	void set_internal_connection(std::shared_ptr<ranger::event::tcp_connection> conn)
+	void set_internal_connection(ranger::event::tcp_connection&& conn)
 	{
 		m_internal_conn = std::move(conn);
-		m_internal_conn->set_event_handler(this);
+		m_internal_conn.set_event_handler(this);
 	}
 
 	bool take_fd(int fd)
 	{
-		if (!m_external_conn)
-			return false;
-
-		return m_external_conn->send(&fd, sizeof(fd));
+		return m_external_conn.send(&fd, sizeof(fd));
 	}
 
 private:
@@ -123,8 +120,8 @@ private:
 
 private:
 	ranger::event::dispatcher m_disp;
-	std::shared_ptr<ranger::event::tcp_connection> m_external_conn;
-	std::shared_ptr<ranger::event::tcp_connection> m_internal_conn;
+	ranger::event::tcp_connection m_external_conn;
+	ranger::event::tcp_connection m_internal_conn;
 	echo_server m_server { m_disp };
 };
 
@@ -134,9 +131,9 @@ class fd_dispatcher
 {
 public:
 	fd_dispatcher(int port, size_t thread_cnt)
-		: m_acc(ranger::event::tcp_acceptor::create(m_disp, ranger::event::endpoint(port)))
+		: m_acc(m_disp, ranger::event::endpoint(port))
 	{
-		m_acc->set_event_handler(this);
+		m_acc.set_event_handler(this);
 
 		decltype(m_workers) workers;
 		workers.reserve(thread_cnt);
@@ -144,7 +141,7 @@ public:
 		{
 			std::unique_ptr<worker> w(new worker);
 			auto conn_pair = ranger::event::tcp_connection::create_pair(m_disp, w->event_dispatcher());
-			conn_pair.first->set_event_handler(this);
+			conn_pair.first.set_event_handler(this);
 			w->set_external_connection(std::move(conn_pair.first));
 			w->set_internal_connection(std::move(conn_pair.second));
 			workers.emplace_back(std::move(w));
@@ -194,7 +191,7 @@ private:
 
 private:
 	ranger::event::dispatcher m_disp;
-	std::shared_ptr<ranger::event::tcp_acceptor> m_acc;
+	ranger::event::tcp_acceptor m_acc;
 	std::vector<std::unique_ptr<worker> > m_workers;
 	size_t m_worker_idx = 0;
 };

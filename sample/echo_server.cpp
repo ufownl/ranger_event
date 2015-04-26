@@ -11,9 +11,9 @@ class echo_server
 {
 public:
 	explicit echo_server(int port)
-		: m_acc(ranger::event::tcp_acceptor::create(m_disp, ranger::event::endpoint(port)))
+		: m_acc(m_disp, ranger::event::endpoint(port))
 	{
-		m_acc->set_event_handler(this);
+		m_acc.set_event_handler(this);
 	}
 
 	int run()
@@ -24,14 +24,14 @@ public:
 private:
 	bool handle_accept(ranger::event::tcp_acceptor& acc, int fd) final
 	{
-		auto conn = ranger::event::tcp_connection::create(m_disp, fd);
-		conn->set_event_handler(this);
+		ranger::event::tcp_connection conn(m_disp, fd);
+		conn.set_event_handler(this);
 
 		auto local_ep = acc.local_endpoint();
-		auto remote_ep = conn->remote_endpoint();
+		auto remote_ep = conn.remote_endpoint();
 		std::cout << "acceptor[" << local_ep << "]" << " accept connection[" << remote_ep << "]." << std::endl;
 
-		m_conn_map[conn.get()] = conn;
+		m_conn_map.emplace(conn.file_descriptor(), std::move(conn));
 
 		return true;
 	}
@@ -46,7 +46,7 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "connection[" << ep << "] " << "timeout." << std::endl;
 
-		m_conn_map.erase(&conn);
+		m_conn_map.erase(conn.file_descriptor());
 	}
 
 	void handle_error(ranger::event::tcp_connection& conn) final
@@ -54,7 +54,7 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "connection[" << ep << "] " << "error[" << conn.error_code() << "]: " << conn.error_description() << std::endl;
 
-		m_conn_map.erase(&conn);
+		m_conn_map.erase(conn.file_descriptor());
 	}
 
 	void handle_eof(ranger::event::tcp_connection& conn) final
@@ -62,14 +62,14 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "connection[" << ep << "] " << "eof." << std::endl;
 
-		m_conn_map.erase(&conn);
+		m_conn_map.erase(conn.file_descriptor());
 	}
 
 private:
 	ranger::event::dispatcher m_disp;
-	std::shared_ptr<ranger::event::tcp_acceptor> m_acc;
+	ranger::event::tcp_acceptor m_acc;
 
-	std::unordered_map<ranger::event::tcp_connection*, std::shared_ptr<ranger::event::tcp_connection> > m_conn_map;
+	std::unordered_map<int, ranger::event::tcp_connection> m_conn_map;
 };
 
 int main(int argc, char* argv[])

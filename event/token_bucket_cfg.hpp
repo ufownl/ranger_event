@@ -35,7 +35,7 @@ struct ev_token_bucket_cfg;
 
 namespace ranger { namespace event {
 
-	class token_bucket_cfg : public std::enable_shared_from_this<token_bucket_cfg>
+	class token_bucket_cfg
 	{
 	public:
 		~token_bucket_cfg();
@@ -43,7 +43,7 @@ namespace ranger { namespace event {
 		token_bucket_cfg(const token_bucket_cfg&) = delete;
 		token_bucket_cfg& operator = (const token_bucket_cfg&) = delete;
 
-		static std::shared_ptr<token_bucket_cfg> create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, float period = 0.0f);
+		static std::shared_ptr<const token_bucket_cfg> create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, float period = 0.0f);
 
 #ifdef RANGER_EVENT_INTERNAL
 	public:

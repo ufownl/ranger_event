@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 	size_t tick_cnt = atoi(argv[1]);
 
 	ranger::event::dispatcher disp;
-	auto tr = ranger::event::trigger::create(disp, [&tick_cnt] (ranger::event::trigger& tr)
+	ranger::event::trigger tr(disp, [&tick_cnt] (ranger::event::trigger& tr)
 			{
 				if (tick_cnt-- > 0)
 				{
@@ -21,6 +21,7 @@ int main(int argc, char* argv[])
 					tr.active();
 				}
 			});
-	tr->active();
+	tr.active();
+
 	return disp.run();
 }
