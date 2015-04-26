@@ -135,16 +135,13 @@ public:
 	{
 		m_acc.set_event_handler(this);
 
-		decltype(m_workers) workers;
-		workers.reserve(thread_cnt);
-		for (size_t i = 0; i < thread_cnt; ++i)
+		decltype(m_workers) workers(thread_cnt);
+		for (auto i = workers.begin(); i != workers.end(); ++i)
 		{
-			std::unique_ptr<worker> w(new worker);
-			auto conn_pair = ranger::event::tcp_connection::create_pair(m_disp, w->event_dispatcher());
+			auto conn_pair = ranger::event::tcp_connection::create_pair(m_disp, i->event_dispatcher());
 			conn_pair.first.set_event_handler(this);
-			w->set_external_connection(std::move(conn_pair.first));
-			w->set_internal_connection(std::move(conn_pair.second));
-			workers.emplace_back(std::move(w));
+			i->set_external_connection(std::move(conn_pair.first));
+			i->set_internal_connection(std::move(conn_pair.second));
 		}
 
 		m_workers = std::move(workers);
@@ -155,7 +152,7 @@ public:
 		std::vector<std::thread> threads;
 		threads.reserve(m_workers.size());
 		for (auto& w: m_workers)
-			threads.emplace_back(&worker::run, w.get());
+			threads.emplace_back(&worker::run, &w);
 
 		int ret = m_disp.run();
 
@@ -167,7 +164,7 @@ public:
 private:
 	bool handle_accept(ranger::event::tcp_acceptor& acc, int fd) final
 	{
-		return m_workers[m_worker_idx++ % m_workers.size()]->take_fd(fd);
+		return m_workers[m_worker_idx++ % m_workers.size()].take_fd(fd);
 	}
 
 	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf) final
@@ -192,7 +189,7 @@ private:
 private:
 	ranger::event::dispatcher m_disp;
 	ranger::event::tcp_acceptor m_acc;
-	std::vector<std::unique_ptr<worker> > m_workers;
+	std::vector<worker> m_workers;
 	size_t m_worker_idx = 0;
 };
 
