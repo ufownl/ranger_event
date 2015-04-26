@@ -71,6 +71,32 @@ namespace ranger { namespace event {
 		tcp_connection(const tcp_connection&) = delete;
 		tcp_connection& operator = (const tcp_connection&) = delete;
 
+		tcp_connection(tcp_connection&& rhs)
+			: m_top_bev(rhs.m_top_bev)
+			, m_base_bev(rhs.m_base_bev)
+			, m_token_bucket(std::move(rhs.m_token_bucket))
+			, m_event_handler(rhs.m_event_handler)
+			, m_extra_data(rhs.m_extra_data)
+		{
+			_reset_callbacks();
+
+			rhs.m_top_bev = nullptr;
+			rhs.m_base_bev = nullptr;
+			rhs.m_event_handler = nullptr;
+			rhs.m_extra_data = nullptr;
+		}
+
+		tcp_connection& operator = (tcp_connection&& rhs)
+		{
+			if (this != &rhs)
+			{
+				tcp_connection conn = std::move(rhs);
+				swap(conn);
+			}
+
+			return *this;
+		}
+		
 		static std::shared_ptr<tcp_connection> create(dispatcher& disp, const endpoint& ep);
 		static std::shared_ptr<tcp_connection> create(dispatcher& disp, const char* addr, int port);
 		static std::shared_ptr<tcp_connection> create(dispatcher& disp, const std::string& addr, int port);
@@ -116,6 +142,19 @@ namespace ranger { namespace event {
 
 		void close() { tcp_connection(std::move(*this)); }
 
+		void swap(tcp_connection& rhs)
+		{
+			using std::swap;
+			swap(m_top_bev, rhs.m_top_bev);
+			swap(m_base_bev, rhs.m_base_bev);
+			swap(m_token_bucket, rhs.m_token_bucket);
+			swap(m_event_handler, rhs.m_event_handler);
+			swap(m_extra_data, rhs.m_extra_data);
+
+			_reset_callbacks();
+			rhs._reset_callbacks();
+		}
+		
 #ifdef RANGER_EVENT_INTERNAL
 	public:
 #else
@@ -128,21 +167,9 @@ namespace ranger { namespace event {
 
 	private:
 		explicit tcp_connection(bufferevent* bev);
-		tcp_connection(tcp_connection&& rhs)
-			: m_top_bev(rhs.m_top_bev)
-			, m_base_bev(rhs.m_base_bev)
-			, m_token_bucket(std::move(rhs.m_token_bucket))
-			, m_event_handler(rhs.m_event_handler)
-			, m_extra_data(rhs.m_extra_data)
-		{
-			rhs.m_top_bev = nullptr;
-			rhs.m_base_bev = nullptr;
-			rhs.m_event_handler = nullptr;
-			rhs.m_extra_data = nullptr;
-		}
-
 
 		void _append_filter(std::unique_ptr<filter_handler> filter);
+		void _reset_callbacks();
 
 	private:
 		bufferevent* m_top_bev;
@@ -151,6 +178,11 @@ namespace ranger { namespace event {
 		event_handler* m_event_handler = nullptr;
 		void* m_extra_data = nullptr;
 	};
+
+	inline void swap(tcp_connection& lhs, tcp_connection& rhs)
+	{
+		lhs.swap(rhs);
+	}
 
 } }
 

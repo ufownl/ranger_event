@@ -273,6 +273,48 @@ namespace ranger { namespace event {
 	{
 	}
 
+	tcp_connection::tcp_connection(bufferevent* bev)
+		: m_top_bev(bev)
+		, m_base_bev(bev)
+	{
+		if (!bev)
+			throw std::runtime_error("bufferevent create failed.");
+
+		_reset_callbacks();
+	}
+
+	namespace
+	{
+
+		bufferevent_filter_result handle_filter_input(evbuffer* src, evbuffer* dst, ev_ssize_t limit, bufferevent_flush_mode mode, void *ctx)
+		{
+			return static_cast<tcp_connection::filter_handler*>(ctx)->handle_input(buffer(src), buffer(dst)) ? BEV_OK : BEV_NEED_MORE;
+		}
+
+		bufferevent_filter_result handle_filter_output(evbuffer* src, evbuffer* dst, ev_ssize_t limit, bufferevent_flush_mode mode, void *ctx)
+		{
+			return static_cast<tcp_connection::filter_handler*>(ctx)->handle_output(buffer(src), buffer(dst)) ? BEV_OK : BEV_NEED_MORE;
+		}
+
+		void filter_free(void* filter)
+		{
+			delete static_cast<tcp_connection::filter_handler*>(filter);
+		}
+
+	}
+
+	void tcp_connection::_append_filter(std::unique_ptr<filter_handler> filter)
+	{
+		std::unique_ptr<bufferevent, decltype(&bufferevent_free)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS, filter_free, filter.get()), bufferevent_free);
+		if (!bev_filter)
+			throw std::runtime_error("bufferevent_filter create failed.");
+
+		filter.release();
+		m_top_bev = bev_filter.release();
+
+		_reset_callbacks();
+	}
+
 	namespace
 	{
 
@@ -305,45 +347,15 @@ namespace ranger { namespace event {
 			}
 		}
 
-		bufferevent_filter_result handle_filter_input(evbuffer* src, evbuffer* dst, ev_ssize_t limit, bufferevent_flush_mode mode, void *ctx)
-		{
-			return static_cast<tcp_connection::filter_handler*>(ctx)->handle_input(buffer(src), buffer(dst)) ? BEV_OK : BEV_NEED_MORE;
-		}
-
-		bufferevent_filter_result handle_filter_output(evbuffer* src, evbuffer* dst, ev_ssize_t limit, bufferevent_flush_mode mode, void *ctx)
-		{
-			return static_cast<tcp_connection::filter_handler*>(ctx)->handle_output(buffer(src), buffer(dst)) ? BEV_OK : BEV_NEED_MORE;
-		}
-
-		void filter_free(void* filter)
-		{
-			delete static_cast<tcp_connection::filter_handler*>(filter);
-		}
-
 	}
 
-	tcp_connection::tcp_connection(bufferevent* bev)
-		: m_top_bev(bev)
-		, m_base_bev(bev)
+	void tcp_connection::_reset_callbacks()
 	{
-		if (!bev)
-			throw std::runtime_error("bufferevent create failed.");
-
-		bufferevent_setcb(bev, handle_read, handle_write, handle_event, this);
-		bufferevent_enable(bev, EV_READ | EV_WRITE);
-	}
-
-	void tcp_connection::_append_filter(std::unique_ptr<filter_handler> filter)
-	{
-		std::unique_ptr<bufferevent, decltype(&bufferevent_free)> bev_filter(bufferevent_filter_new(m_top_bev, handle_filter_input, handle_filter_output, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS, filter_free, filter.get()), bufferevent_free);
-		if (!bev_filter)
-			throw std::runtime_error("bufferevent_filter create failed.");
-
-		bufferevent_setcb(bev_filter.get(), handle_read, handle_write, handle_event, this);
-		bufferevent_enable(bev_filter.get(), EV_READ | EV_WRITE);
-
-		m_top_bev = bev_filter.release();
-		filter.release();
+		if (m_top_bev)
+		{
+			bufferevent_setcb(m_top_bev, handle_read, handle_write, handle_event, this);
+			bufferevent_enable(m_top_bev, EV_READ | EV_WRITE);
+		}
 	}
 
 } }

@@ -64,6 +64,7 @@ namespace ranger { namespace event {
 
 	namespace
 	{
+
 		void handle_accept(evconnlistener* listener, evutil_socket_t fd, sockaddr* addr, int socklen, void* ctx)
 		{
 			util::scope_guard fd_guard([fd] () { evutil_closesocket(fd); });

@@ -58,7 +58,6 @@ namespace ranger { namespace event {
 
 		const sockaddr_in& _sockaddr_in() const { return m_sin; }
 
-
 	private:
 		sockaddr_in m_sin;
 	};
