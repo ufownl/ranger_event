@@ -64,12 +64,17 @@ namespace ranger { namespace event {
 			evconnlistener_free(m_listener);
 	}
 
-	endpoint tcp_acceptor::local_endpoint() const
+	int tcp_acceptor::file_descriptor() const
 	{
 		if (!m_listener)
-			return endpoint();
+			return -1;
 
-		evutil_socket_t fd = evconnlistener_get_fd(m_listener);
+		return evconnlistener_get_fd(m_listener);
+	}
+
+	endpoint tcp_acceptor::local_endpoint() const
+	{
+		evutil_socket_t fd = file_descriptor();
 		if (fd == -1)
 			return endpoint();
 

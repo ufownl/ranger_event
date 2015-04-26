@@ -75,6 +75,7 @@ namespace ranger { namespace event {
 			return *this;
 		}
 
+		int file_descriptor() const;
 		endpoint local_endpoint() const;
 
 		void set_event_handler(event_handler* handler) { m_event_handler = handler; }
