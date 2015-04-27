@@ -44,8 +44,8 @@ namespace ranger { namespace event {
 			util::scope_guard fd_guard([fd] () { evutil_closesocket(fd); });
 
 			auto acc = static_cast<tcp_acceptor*>(ctx);
-			auto handler = acc->get_event_handler();
-			if (handler && handler->handle_accept(*acc, fd))
+			auto& handler = acc->get_event_handler();
+			if (handler && handler(*acc, fd))
 				fd_guard.dismiss();
 		}
 

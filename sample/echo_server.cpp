@@ -13,7 +13,38 @@ public:
 	explicit echo_server(int port)
 		: m_acc(m_disp, ranger::event::endpoint(port))
 	{
-		m_acc.set_event_handler(this);
+		m_acc.set_event_handler([this] (ranger::event::tcp_acceptor& acc, int fd)
+				{
+					ranger::event::tcp_connection conn(m_disp, fd);
+					conn.set_event_handler([this] (ranger::event::tcp_connection& conn, ranger::event::tcp_connection::event_code what)
+						{
+							switch (what)
+							{
+							case ranger::event::tcp_connection::event_code::read:
+								handle_read(conn, conn.read_buffer());
+								break;
+							case ranger::event::tcp_connection::event_code::timeout:
+								handle_timeout(conn);
+								break;
+							case ranger::event::tcp_connection::event_code::error:
+								handle_error(conn);
+								break;
+							case ranger::event::tcp_connection::event_code::eof:
+								handle_eof(conn);
+								break;
+							default:
+								break;
+							}
+						});
+
+					auto local_ep = acc.local_endpoint();
+					auto remote_ep = conn.remote_endpoint();
+					std::cout << "acceptor[" << local_ep << "]" << " accept connection[" << remote_ep << "]." << std::endl;
+
+					m_conn_map.emplace(conn.file_descriptor(), std::move(conn));
+
+					return true;
+				});
 	}
 
 	int run()
@@ -22,26 +53,12 @@ public:
 	}
 
 private:
-	bool handle_accept(ranger::event::tcp_acceptor& acc, int fd) final
+	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf)
 	{
-		ranger::event::tcp_connection conn(m_disp, fd);
-		conn.set_event_handler(this);
-
-		auto local_ep = acc.local_endpoint();
-		auto remote_ep = conn.remote_endpoint();
-		std::cout << "acceptor[" << local_ep << "]" << " accept connection[" << remote_ep << "]." << std::endl;
-
-		m_conn_map.emplace(conn.file_descriptor(), std::move(conn));
-
-		return true;
+		conn.write_buffer().append(buf);
 	}
 
-	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf) final
-	{
-		conn.send(buf);
-	}
-
-	void handle_timeout(ranger::event::tcp_connection& conn) final
+	void handle_timeout(ranger::event::tcp_connection& conn)
 	{
 		auto ep = conn.remote_endpoint();
 		std::cerr << "connection[" << ep << "] " << "timeout." << std::endl;
@@ -49,7 +66,7 @@ private:
 		m_conn_map.erase(conn.file_descriptor());
 	}
 
-	void handle_error(ranger::event::tcp_connection& conn) final
+	void handle_error(ranger::event::tcp_connection& conn)
 	{
 		auto ep = conn.remote_endpoint();
 		std::cerr << "connection[" << ep << "] " << "error[" << conn.error_code() << "]: " << conn.error_description() << std::endl;
@@ -57,7 +74,7 @@ private:
 		m_conn_map.erase(conn.file_descriptor());
 	}
 
-	void handle_eof(ranger::event::tcp_connection& conn) final
+	void handle_eof(ranger::event::tcp_connection& conn)
 	{
 		auto ep = conn.remote_endpoint();
 		std::cerr << "connection[" << ep << "] " << "eof." << std::endl;

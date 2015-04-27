@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <thread>
 
-class echo_server : public ranger::event::tcp_connection::event_handler
+class echo_server
 {
 public:
 	explicit echo_server(ranger::event::dispatcher& disp)
@@ -21,7 +21,26 @@ public:
 		ranger::util::scope_guard fd_guard([fd] () { ranger::event::tcp_connection::file_descriptor_close(fd); });
 		
 		ranger::event::tcp_connection conn(m_disp, fd);
-		conn.set_event_handler(this);
+		conn.set_event_handler([this] (ranger::event::tcp_connection& conn, ranger::event::tcp_connection::event_code what)
+				{
+					switch (what)
+					{
+					case ranger::event::tcp_connection::event_code::read:
+						handle_read(conn, conn.read_buffer());
+						break;
+					case ranger::event::tcp_connection::event_code::timeout:
+						handle_timeout(conn);
+						break;
+					case ranger::event::tcp_connection::event_code::error:
+						handle_error(conn);
+						break;
+					case ranger::event::tcp_connection::event_code::eof:
+						handle_eof(conn);
+						break;
+					default:
+						break;
+					}
+				});
 
 		fd_guard.dismiss();
 
@@ -30,15 +49,15 @@ public:
 
 		m_conn_map.emplace(conn.file_descriptor(), std::move(conn));
 	}
-	
+
 private:
-	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf) final
+	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf)
 	{
 		std::cout << "thread[" << std::this_thread::get_id() << "] " << __FUNCTION__ << std::endl;
-		conn.send(buf);
+		conn.write_buffer().append(buf);
 	}
 
-	void handle_timeout(ranger::event::tcp_connection& conn) final
+	void handle_timeout(ranger::event::tcp_connection& conn)
 	{
 		auto ep = conn.remote_endpoint();
 		std::cerr << "thread[" << std::this_thread::get_id() << "] " << "connection[" << ep << "] " << "timeout." << std::endl;
@@ -46,7 +65,7 @@ private:
 		m_conn_map.erase(conn.file_descriptor());
 	}
 
-	void handle_error(ranger::event::tcp_connection& conn) final
+	void handle_error(ranger::event::tcp_connection& conn)
 	{
 		auto ep = conn.remote_endpoint();
 		std::cerr << "thread[" << std::this_thread::get_id() << "] " << "connection[" << ep << "] " << "error[" << conn.error_code() << "]: " << conn.error_description() << std::endl;
@@ -54,7 +73,7 @@ private:
 		m_conn_map.erase(conn.file_descriptor());
 	}
 
-	void handle_eof(ranger::event::tcp_connection& conn) final
+	void handle_eof(ranger::event::tcp_connection& conn)
 	{
 		auto ep = conn.remote_endpoint();
 		std::cerr << "thread[" << std::this_thread::get_id() << "] " << "connection[" << ep << "] " << "eof." << std::endl;
@@ -67,7 +86,7 @@ private:
 	std::unordered_map<int, ranger::event::tcp_connection> m_conn_map;
 };
 
-class worker : public ranger::event::tcp_connection::event_handler
+class worker
 {
 public:
 	void run()
@@ -85,37 +104,31 @@ public:
 	void set_internal_connection(ranger::event::tcp_connection&& conn)
 	{
 		m_internal_conn = std::move(conn);
-		m_internal_conn.set_event_handler(this);
+		m_internal_conn.set_event_handler([this] (ranger::event::tcp_connection& conn, ranger::event::tcp_connection::event_code what)
+				{
+					switch (what)
+					{
+					case ranger::event::tcp_connection::event_code::read:
+						for (int fd = 0; conn.read_buffer().size() >= sizeof(fd); )
+						{
+							conn.read_buffer().remove(&fd, sizeof(fd));
+							m_server.take_fd(fd);
+						}
+						break;
+					case ranger::event::tcp_connection::event_code::timeout:
+					case ranger::event::tcp_connection::event_code::error:
+					case ranger::event::tcp_connection::event_code::eof:
+						conn.close();
+						break;
+					default:
+						break;
+					}
+				});
 	}
 
 	bool take_fd(int fd)
 	{
-		return m_external_conn.send(&fd, sizeof(fd));
-	}
-
-private:
-	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf) final
-	{
-		for (int fd = 0; buf.size() >= sizeof(fd); )
-		{
-			buf.remove(&fd, sizeof(fd));
-			m_server.take_fd(fd);
-		}
-	}
-
-	void handle_timeout(ranger::event::tcp_connection& conn) final
-	{
-		conn.close();
-	}
-
-	void handle_error(ranger::event::tcp_connection& conn) final
-	{
-		conn.close();
-	}
-
-	void handle_eof(ranger::event::tcp_connection& conn) final
-	{
-		conn.close();
+		return m_external_conn.write_buffer().append(&fd, sizeof(fd));
 	}
 
 private:
@@ -133,13 +146,29 @@ public:
 	fd_dispatcher(int port, size_t thread_cnt)
 		: m_acc(m_disp, ranger::event::endpoint(port))
 	{
-		m_acc.set_event_handler(this);
+		m_acc.set_event_handler([this] (ranger::event::tcp_acceptor& acc, int fd)
+				{
+					return m_workers[m_worker_idx++ % m_workers.size()].take_fd(fd);
+				});
 
 		decltype(m_workers) workers(thread_cnt);
 		for (auto i = workers.begin(); i != workers.end(); ++i)
 		{
 			auto conn_pair = ranger::event::tcp_connection::create_pair(m_disp, i->event_dispatcher());
-			conn_pair.first.set_event_handler(this);
+			conn_pair.first.set_event_handler([] (ranger::event::tcp_connection& conn, ranger::event::tcp_connection::event_code what)
+					{
+						switch (what)
+						{
+						case ranger::event::tcp_connection::event_code::timeout:
+						case ranger::event::tcp_connection::event_code::error:
+						case ranger::event::tcp_connection::event_code::eof:
+							conn.close();
+							break;
+						default:
+							break;
+						}
+					});
+
 			i->set_external_connection(std::move(conn_pair.first));
 			i->set_internal_connection(std::move(conn_pair.second));
 		}
@@ -159,31 +188,6 @@ public:
 		for (auto& t: threads) t.join();
 
 		return ret;
-	}
-
-private:
-	bool handle_accept(ranger::event::tcp_acceptor& acc, int fd) final
-	{
-		return m_workers[m_worker_idx++ % m_workers.size()].take_fd(fd);
-	}
-
-	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf) final
-	{
-	}
-
-	void handle_timeout(ranger::event::tcp_connection& conn) final
-	{
-		conn.close();
-	}
-
-	void handle_error(ranger::event::tcp_connection& conn) final
-	{
-		conn.close();
-	}
-
-	void handle_eof(ranger::event::tcp_connection& conn) final
-	{
-		conn.close();
 	}
 
 private:

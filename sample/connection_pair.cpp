@@ -4,38 +4,40 @@
 #include <iostream>
 #include <vector>
 
-class connection_pair : public ranger::event::tcp_connection::event_handler
+class connection_pair
 {
 public:
 	explicit connection_pair(size_t cnt)
 		: m_cnt(cnt * 2)
 	{
-		m_conn_pair.first.set_event_handler(this);
-		m_conn_pair.second.set_event_handler(this);
+		auto handler = [this] (ranger::event::tcp_connection& conn, ranger::event::tcp_connection::event_code what)
+		{
+			if (what == ranger::event::tcp_connection::event_code::read)
+			{
+				if (m_cnt-- > 0)
+				{
+					std::vector<char> v(conn.read_buffer().size());
+					conn.read_buffer().remove(&v.front(), v.size());
+					for (auto ch: v) std::cout << ch;
+					conn.write_buffer().append(&v.front(), v.size());
+				}
+				else
+				{
+					m_conn_pair.first.close();
+					m_conn_pair.second.close();
+				}
+			}
+		};
+
+		m_conn_pair.first.set_event_handler(handler);
+		m_conn_pair.second.set_event_handler(handler);
 	}
 
 	int run()
 	{
 		char msg[] = "Hello, world!\n";
-		m_conn_pair.first.send(msg, strlen(msg));
+		m_conn_pair.first.write_buffer().append(msg, strlen(msg));
 		return m_disp.run();
-	}
-
-private:
-	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf) final
-	{
-		if (m_cnt-- > 0)
-		{
-			std::vector<char> v(buf.size());
-			buf.remove(&v.front(), v.size());
-			for (auto ch: v) std::cout << ch;
-			conn.send(&v.front(), v.size());
-		}
-		else
-		{
-			m_conn_pair.first.close();
-			m_conn_pair.second.close();
-		}
 	}
 
 private:

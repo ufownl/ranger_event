@@ -29,7 +29,7 @@
 #ifndef RANGER_EVENT_TCP_ACCEPTOR_HPP
 #define RANGER_EVENT_TCP_ACCEPTOR_HPP
 
-#include <utility>
+#include <functional>
 
 struct evconnlistener;
 
@@ -42,10 +42,7 @@ namespace ranger { namespace event {
 	class tcp_acceptor
 	{
 	public:
-		struct event_handler
-		{
-			virtual bool handle_accept(tcp_acceptor&, int fd) = 0;
-		};
+		using event_handler = std::function<bool(tcp_acceptor&, int)>;
 
 	public:
 		tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog = -1);
@@ -56,12 +53,11 @@ namespace ranger { namespace event {
 
 		tcp_acceptor(tcp_acceptor&& rhs)
 			: m_listener(rhs.m_listener)
-			, m_event_handler(rhs.m_event_handler)
+			, m_event_handler(std::move(rhs.m_event_handler))
 		{
 			_reset_callbacks();
 
 			rhs.m_listener = nullptr;
-			rhs.m_event_handler = nullptr;
 		}
 
 		tcp_acceptor& operator = (tcp_acceptor&& rhs)
@@ -78,8 +74,9 @@ namespace ranger { namespace event {
 		int file_descriptor() const;
 		endpoint local_endpoint() const;
 
-		void set_event_handler(event_handler* handler) { m_event_handler = handler; }
-		event_handler* get_event_handler() const { return m_event_handler; }
+		template <class T>
+		void set_event_handler(T&& handler) { m_event_handler = std::forward<T>(handler); }
+		const event_handler& get_event_handler() const { return m_event_handler; }
 
 		void close() { tcp_acceptor(std::move(*this)); }
 
@@ -98,7 +95,7 @@ namespace ranger { namespace event {
 
 	private:
 		evconnlistener* m_listener;
-		event_handler* m_event_handler = nullptr;
+		event_handler m_event_handler;
 	};
 
 	inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs)

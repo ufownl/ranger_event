@@ -36,6 +36,7 @@
 #include <event/endpoint.hpp>
 #include <event/token_bucket_cfg.hpp>
 #endif	// RANGER_EVENT_INTERNAL
+#include <functional>
 
 struct bufferevent;
 struct event_base;
@@ -48,15 +49,18 @@ namespace ranger { namespace event {
 	class tcp_connection
 	{
 	public:
-		struct event_handler
+		enum class event_code
 		{
-			virtual void handle_read(tcp_connection&, buffer&&) = 0;
-			virtual void handle_write(tcp_connection&, buffer&&) {}
-			virtual void handle_connected(tcp_connection&) {}
-			virtual void handle_timeout(tcp_connection&) {}
-			virtual void handle_error(tcp_connection&) {}
-			virtual void handle_eof(tcp_connection&) {}
+			read,
+			write,
+			connected,
+			timeout,
+			error,
+			eof,
+			invalid
 		};
+
+		using event_handler = std::function<void(tcp_connection&, event_code)>;
 
 		struct filter_handler
 		{
@@ -80,14 +84,13 @@ namespace ranger { namespace event {
 			: m_top_bev(rhs.m_top_bev)
 			, m_base_bev(rhs.m_base_bev)
 			, m_token_bucket(std::move(rhs.m_token_bucket))
-			, m_event_handler(rhs.m_event_handler)
+			, m_event_handler(std::move(rhs.m_event_handler))
 			, m_extra_data(rhs.m_extra_data)
 		{
 			_reset_callbacks();
 
 			rhs.m_top_bev = nullptr;
 			rhs.m_base_bev = nullptr;
-			rhs.m_event_handler = nullptr;
 			rhs.m_extra_data = nullptr;
 		}
 
@@ -106,8 +109,8 @@ namespace ranger { namespace event {
 		static std::pair<tcp_connection, tcp_connection> create_pair(dispatcher& disp);
 		static void file_descriptor_close(int fd);
 
-		bool send(const void* src, size_t len);
-		bool send(buffer& src);
+		buffer read_buffer();
+		buffer write_buffer();
 
 		void set_timeouts(float read_timeout, float write_timeout);
 
@@ -135,8 +138,9 @@ namespace ranger { namespace event {
 				_append_filter(std::unique_ptr<filter_handler>(new T(std::forward<ARGS>(args)...)));
 		}
 
-		void set_event_handler(event_handler* handler) { m_event_handler = handler; }
-		event_handler* get_event_handler() const { return m_event_handler; }
+		template <class T>
+		void set_event_handler(T&& handler) { m_event_handler = std::forward<T>(handler); }
+		const event_handler& get_event_handler() const { return m_event_handler; }
 
 		void set_extra_data(void* extra) { m_extra_data = extra; }
 		void* get_extra_data() const { return m_extra_data; }
@@ -166,7 +170,7 @@ namespace ranger { namespace event {
 		bufferevent* m_top_bev;
 		bufferevent* m_base_bev;
 		std::shared_ptr<const token_bucket_cfg> m_token_bucket;
-		event_handler* m_event_handler = nullptr;
+		event_handler m_event_handler;
 		void* m_extra_data = nullptr;
 	};
 

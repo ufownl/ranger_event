@@ -111,20 +111,14 @@ namespace ranger { namespace event {
 		evutil_closesocket(fd);
 	}
 
-	bool tcp_connection::send(const void* src, size_t len)
+	buffer tcp_connection::read_buffer()
 	{
-		if (!m_top_bev)
-			return false;
-
-		return bufferevent_write(m_top_bev, src, len) == 0;
+		return m_top_bev ? buffer(bufferevent_get_input(m_top_bev)) : buffer(nullptr);
 	}
 
-	bool tcp_connection::send(buffer& src)
+	buffer tcp_connection::write_buffer()
 	{
-		if (!m_top_bev)
-			return false;
-
-		return bufferevent_write_buffer(m_top_bev, src._evbuffer()) == 0;
+		return m_top_bev ? buffer(bufferevent_get_output(m_top_bev)) : buffer(nullptr);
 	}
 
 	void tcp_connection::set_timeouts(float read_timeout, float write_timeout)
@@ -306,29 +300,29 @@ namespace ranger { namespace event {
 		void handle_read(bufferevent* bev, void* ctx)
 		{
 			auto conn = static_cast<tcp_connection*>(ctx);
-			auto handler = conn->get_event_handler();
+			auto& handler = conn->get_event_handler();
 			if (handler)
-				handler->handle_read(*conn, buffer(bufferevent_get_input(bev)));
+				handler(*conn, tcp_connection::event_code::read);
 		}
 
 		void handle_write(bufferevent* bev, void* ctx)
 		{
 			auto conn = static_cast<tcp_connection*>(ctx);
-			auto handler = conn->get_event_handler();
+			auto& handler = conn->get_event_handler();
 			if (handler)
-				handler->handle_write(*conn, buffer(bufferevent_get_output(bev)));
+				handler(*conn, tcp_connection::event_code::write);
 		}
 
 		void handle_event(bufferevent* bev, short what, void* ctx)
 		{
 			auto conn = static_cast<tcp_connection*>(ctx);
-			auto handler = conn->get_event_handler();
+			auto& handler = conn->get_event_handler();
 			if (handler)
 			{
-				if (what & BEV_EVENT_EOF) handler->handle_eof(*conn);
-				else if (what & BEV_EVENT_ERROR) handler->handle_error(*conn);
-				else if (what & BEV_EVENT_TIMEOUT) handler->handle_timeout(*conn);
-				else if (what & BEV_EVENT_CONNECTED) handler->handle_connected(*conn);
+				if (what & BEV_EVENT_EOF) handler(*conn, tcp_connection::event_code::eof);
+				else if (what & BEV_EVENT_ERROR) handler(*conn, tcp_connection::event_code::error);
+				else if (what & BEV_EVENT_TIMEOUT) handler(*conn, tcp_connection::event_code::timeout);
+				else if (what & BEV_EVENT_CONNECTED) handler(*conn, tcp_connection::event_code::connected);
 			}
 		}
 
