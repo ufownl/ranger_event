@@ -3,7 +3,7 @@
 #include <event/tcp_connection.hpp>
 #include <event/buffer.hpp>
 #include <iostream>
-#include <unordered_map>
+#include <unordered_set>
 
 class echo_server
 	: public ranger::event::tcp_acceptor::event_handler
@@ -41,7 +41,7 @@ public:
 					auto remote_ep = conn.remote_endpoint();
 					std::cout << "acceptor[" << local_ep << "]" << " accept connection[" << remote_ep << "]." << std::endl;
 
-					m_conn_map.emplace(conn.file_descriptor(), std::move(conn));
+					m_conn_set.emplace(std::move(conn));
 
 					return true;
 				});
@@ -63,7 +63,7 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "connection[" << ep << "] " << "timeout." << std::endl;
 
-		m_conn_map.erase(conn.file_descriptor());
+		m_conn_set.erase(conn);
 	}
 
 	void handle_error(ranger::event::tcp_connection& conn)
@@ -71,7 +71,7 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "connection[" << ep << "] " << "error[" << conn.error_code() << "]: " << conn.error_description() << std::endl;
 
-		m_conn_map.erase(conn.file_descriptor());
+		m_conn_set.erase(conn);
 	}
 
 	void handle_eof(ranger::event::tcp_connection& conn)
@@ -79,14 +79,14 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "connection[" << ep << "] " << "eof." << std::endl;
 
-		m_conn_map.erase(conn.file_descriptor());
+		m_conn_set.erase(conn);
 	}
 
 private:
 	ranger::event::dispatcher m_disp;
 	ranger::event::tcp_acceptor m_acc;
 
-	std::unordered_map<int, ranger::event::tcp_connection> m_conn_map;
+	std::unordered_set<ranger::event::tcp_connection> m_conn_set;
 };
 
 int main(int argc, char* argv[])

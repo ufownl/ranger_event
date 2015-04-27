@@ -105,4 +105,47 @@ namespace ranger { namespace event {
 
 } }
 
+namespace std
+{
+
+	template <>
+	struct less<ranger::event::tcp_acceptor>
+	{
+		using result_type = bool;
+		using first_argument_type = ranger::event::tcp_acceptor;
+		using second_argument_type = ranger::event::tcp_acceptor;
+
+		bool operator () (const ranger::event::tcp_acceptor& lhs, const ranger::event::tcp_acceptor& rhs) const
+		{
+			return lhs.file_descriptor() < rhs.file_descriptor();
+		}
+	};
+
+	template <>
+	struct equal_to<ranger::event::tcp_acceptor>
+	{
+		using result_type = bool;
+		using first_argument_type = ranger::event::tcp_acceptor;
+		using second_argument_type = ranger::event::tcp_acceptor;
+
+		bool operator () (const ranger::event::tcp_acceptor& lhs, const ranger::event::tcp_acceptor& rhs) const
+		{
+			return lhs.file_descriptor() == rhs.file_descriptor();
+		}
+	};
+
+	template <>
+	struct hash<ranger::event::tcp_acceptor>
+	{
+		using result_type = size_t;
+		using argument_type = ranger::event::tcp_acceptor;
+
+		size_t operator () (const ranger::event::tcp_acceptor& conn)
+		{
+			return conn.file_descriptor();
+		}
+	};
+
+}
+
 #endif	// RANGER_EVENT_TCP_ACCEPTOR_HPP

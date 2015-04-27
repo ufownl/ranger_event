@@ -5,7 +5,7 @@
 #include <util/scope_guard.hpp>
 #include <iostream>
 #include <vector>
-#include <unordered_map>
+#include <unordered_set>
 #include <thread>
 
 class echo_server
@@ -47,7 +47,7 @@ public:
 		auto remote_ep = conn.remote_endpoint();
 		std::cout << "thread[" << std::this_thread::get_id() << "] " << "accept connection[" << remote_ep << "]." << std::endl;
 
-		m_conn_map.emplace(conn.file_descriptor(), std::move(conn));
+		m_conn_set.emplace(std::move(conn));
 	}
 
 private:
@@ -62,7 +62,7 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "thread[" << std::this_thread::get_id() << "] " << "connection[" << ep << "] " << "timeout." << std::endl;
 
-		m_conn_map.erase(conn.file_descriptor());
+		m_conn_set.erase(conn);
 	}
 
 	void handle_error(ranger::event::tcp_connection& conn)
@@ -70,7 +70,7 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "thread[" << std::this_thread::get_id() << "] " << "connection[" << ep << "] " << "error[" << conn.error_code() << "]: " << conn.error_description() << std::endl;
 
-		m_conn_map.erase(conn.file_descriptor());
+		m_conn_set.erase(conn);
 	}
 
 	void handle_eof(ranger::event::tcp_connection& conn)
@@ -78,12 +78,12 @@ private:
 		auto ep = conn.remote_endpoint();
 		std::cerr << "thread[" << std::this_thread::get_id() << "] " << "connection[" << ep << "] " << "eof." << std::endl;
 
-		m_conn_map.erase(conn.file_descriptor());
+		m_conn_set.erase(conn);
 	}
 
 private:
 	ranger::event::dispatcher& m_disp;
-	std::unordered_map<int, ranger::event::tcp_connection> m_conn_map;
+	std::unordered_set<ranger::event::tcp_connection> m_conn_set;
 };
 
 class worker

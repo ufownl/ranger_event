@@ -181,4 +181,47 @@ namespace ranger { namespace event {
 
 } }
 
+namespace std
+{
+
+	template <>
+	struct less<ranger::event::tcp_connection>
+	{
+		using result_type = bool;
+		using first_argument_type = ranger::event::tcp_connection;
+		using second_argument_type = ranger::event::tcp_connection;
+
+		bool operator () (const ranger::event::tcp_connection& lhs, const ranger::event::tcp_connection& rhs) const
+		{
+			return lhs.file_descriptor() < rhs.file_descriptor();
+		}
+	};
+
+	template <>
+	struct equal_to<ranger::event::tcp_connection>
+	{
+		using result_type = bool;
+		using first_argument_type = ranger::event::tcp_connection;
+		using second_argument_type = ranger::event::tcp_connection;
+
+		bool operator () (const ranger::event::tcp_connection& lhs, const ranger::event::tcp_connection& rhs) const
+		{
+			return lhs.file_descriptor() == rhs.file_descriptor();
+		}
+	};
+
+	template <>
+	struct hash<ranger::event::tcp_connection>
+	{
+		using result_type = size_t;
+		using argument_type = ranger::event::tcp_connection;
+
+		size_t operator () (const ranger::event::tcp_connection& conn)
+		{
+			return conn.file_descriptor();
+		}
+	};
+
+}
+
 #endif	// RANGER_EVENT_TCP_CONNECTION_HPP
