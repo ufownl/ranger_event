@@ -37,7 +37,7 @@ namespace ranger { namespace event {
 	dispatcher::dispatcher()
 	{
 		static std::once_flag flag;
-		std::call_once(flag, [] ()
+		std::call_once(flag, []
 				{
 					if (evthread_use_pthreads() == -1)
 						throw std::runtime_error("evthread_use_pthreads call failed.");

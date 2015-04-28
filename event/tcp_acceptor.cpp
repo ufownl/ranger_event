@@ -41,7 +41,7 @@ namespace ranger { namespace event {
 
 		void handle_accept(evconnlistener* listener, evutil_socket_t fd, sockaddr* addr, int socklen, void* ctx)
 		{
-			util::scope_guard fd_guard([fd] () { evutil_closesocket(fd); });
+			util::scope_guard fd_guard([fd] { evutil_closesocket(fd); });
 
 			auto acc = static_cast<tcp_acceptor*>(ctx);
 			auto& handler = acc->get_event_handler();

@@ -83,8 +83,8 @@ namespace ranger { namespace event {
 			throw std::runtime_error("evutil_socketpair call failed.");
 		}
 
-		util::scope_guard fd_first_guard([fd_pair] () { evutil_closesocket(fd_pair[0]); });
-		util::scope_guard fd_second_guard([fd_pair] () { evutil_closesocket(fd_pair[1]); });
+		util::scope_guard fd_first_guard([fd_pair] { evutil_closesocket(fd_pair[0]); });
+		util::scope_guard fd_second_guard([fd_pair] { evutil_closesocket(fd_pair[1]); });
 
 		for (auto fd: fd_pair)
 		{

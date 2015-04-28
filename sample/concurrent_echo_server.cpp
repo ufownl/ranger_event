@@ -18,7 +18,7 @@ public:
 
 	void take_fd(int fd)
 	{
-		ranger::util::scope_guard fd_guard([fd] () { ranger::event::tcp_connection::file_descriptor_close(fd); });
+		ranger::util::scope_guard fd_guard([fd] { ranger::event::tcp_connection::file_descriptor_close(fd); });
 		
 		ranger::event::tcp_connection conn(m_disp, fd);
 		conn.set_event_handler([this] (ranger::event::tcp_connection& conn, ranger::event::tcp_connection::event_code what)
