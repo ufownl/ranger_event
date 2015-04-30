@@ -121,29 +121,6 @@ namespace ranger { namespace event {
 		return m_top_bev ? buffer(bufferevent_get_output(m_top_bev)) : buffer(nullptr);
 	}
 
-	void tcp_connection::set_timeouts(float read_timeout, float write_timeout)
-	{
-		if (m_base_bev)
-		{
-			timeval read_tv;
-			timeval write_tv;
-
-			if (read_timeout > 0.0f)
-			{
-				read_tv.tv_sec = static_cast<long>(read_timeout);
-				read_tv.tv_usec = static_cast<long>((read_timeout - read_tv.tv_sec) * 1e6);
-			}
-
-			if (write_timeout > 0.0f)
-			{
-				write_tv.tv_sec = static_cast<long>(write_timeout);
-				write_tv.tv_usec = static_cast<long>((write_timeout - write_tv.tv_sec) * 1e6);
-			}
-
-			bufferevent_set_timeouts(m_base_bev, read_timeout > 0.0f ? &read_tv : nullptr, write_timeout > 0.0f ? &write_tv : nullptr);
-		}
-	}
-
 	void tcp_connection::set_rate_limit(std::shared_ptr<const token_bucket_cfg> cfg)
 	{
 		if (m_base_bev)
@@ -260,6 +237,31 @@ namespace ranger { namespace event {
 			throw std::runtime_error("bufferevent create failed.");
 
 		_reset_callbacks();
+	}
+
+	void tcp_connection::_set_timeouts(long read_sec, long read_usec, long write_sec, long write_usec)
+	{
+		if (m_base_bev)
+		{
+			timeval read_tv;
+			timeval write_tv;
+
+			if (read_sec > 0 || read_usec > 0)
+			{
+				read_tv.tv_sec = read_sec;
+				read_tv.tv_usec = read_usec;
+			}
+
+			if (write_sec > 0 || write_usec > 0)
+			{
+				write_tv.tv_sec = write_sec;
+				write_tv.tv_usec = write_usec;
+			}
+
+			bufferevent_set_timeouts(m_base_bev,
+					read_sec > 0 || read_usec > 0 ? &read_tv : nullptr,
+					write_sec > 0 || write_usec > 0 ? &write_tv : nullptr);
+		}
 	}
 
 	namespace

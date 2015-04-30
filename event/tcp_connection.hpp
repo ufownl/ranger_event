@@ -112,7 +112,15 @@ namespace ranger { namespace event {
 		buffer read_buffer();
 		buffer write_buffer();
 
-		void set_timeouts(float read_timeout, float write_timeout);
+		template <class _read_rep, class _read_period, class _write_rep, class _write_period>
+		void set_timeouts(const std::chrono::duration<_read_rep, _read_period>& read_timeout, const std::chrono::duration<_write_rep, _write_period>& write_timeout)
+		{
+			auto read_sec = std::chrono::duration_cast<std::chrono::seconds>(read_timeout);
+			auto read_usec = std::chrono::duration_cast<std::chrono::microseconds>(read_timeout - read_sec);
+			auto write_sec = std::chrono::duration_cast<std::chrono::seconds>(write_timeout);
+			auto write_usec = std::chrono::duration_cast<std::chrono::microseconds>(write_timeout - write_sec);
+			_set_timeouts(read_sec.count(), read_usec.count(), write_sec.count(), write_usec.count());
+		}
 
 		void set_rate_limit(std::shared_ptr<const token_bucket_cfg> cfg);
 		void reset_rate_limit();
@@ -163,6 +171,7 @@ namespace ranger { namespace event {
 	private:
 		explicit tcp_connection(bufferevent* bev);
 
+		void _set_timeouts(long read_sec, long read_usec, long write_sec, long write_usec);
 		void _append_filter(std::unique_ptr<filter_handler> filter);
 		void _reset_callbacks();
 

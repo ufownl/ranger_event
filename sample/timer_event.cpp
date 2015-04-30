@@ -19,10 +19,10 @@ int main(int argc, char* argv[])
 				if (tick_cnt-- > 0)
 				{
 					std::cout << "tick: " << tick_cnt << std::endl;
-					tmr.active(period);
+					tmr.active(std::chrono::duration<float>(period));
 				}
 			});
-	tmr.active(period);
+	tmr.active(std::chrono::duration<float>(period));
 
 	return disp.run();
 }

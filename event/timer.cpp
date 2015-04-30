@@ -44,18 +44,6 @@ namespace ranger { namespace event {
 			event_free(m_event);
 	}
 
-	void timer::active(float duration)
-	{
-		if (duration > 0.0f)
-		{
-			timeval tv;
-			tv.tv_sec = static_cast<long>(duration);
-			tv.tv_usec = static_cast<long>((duration - tv.tv_sec) * 1e6);
-
-			event_add(m_event, &tv);
-		}
-	}
-
 	namespace
 	{
 
@@ -74,6 +62,18 @@ namespace ranger { namespace event {
 		m_event = event_new(base, -1, 0, handle_expire, this);
 		if (!m_event)
 			throw std::runtime_error("event create failed.");
+	}
+
+	void timer::_active(long sec, long usec)
+	{
+		if (sec > 0 || usec > 0)
+		{
+			timeval tv;
+			tv.tv_sec = sec;
+			tv.tv_usec = usec;
+
+			event_add(m_event, &tv);
+		}
 	}
 
 } }

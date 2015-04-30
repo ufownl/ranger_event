@@ -64,22 +64,22 @@ namespace ranger { namespace event {
 		return m_base ? event_base_loop(m_base, is_block ? EVLOOP_ONCE : EVLOOP_ONCE | EVLOOP_NONBLOCK) : 1;
 	}
 
-	void dispatcher::exit(float delay /* = 0.0f */)
+	void dispatcher::kill()
 	{
-		if (delay > 0.0f)
+		event_base_loopbreak(m_base);
+	}
+
+	void dispatcher::_exit(long sec, long usec)
+	{
+		if (sec > 0 || usec > 0)
 		{
 			timeval tv;
-			tv.tv_sec = static_cast<long>(delay);
-			tv.tv_usec = static_cast<long>((delay - tv.tv_sec) * 1e6);
+			tv.tv_sec = sec;
+			tv.tv_usec = usec;
 			event_base_loopexit(m_base, &tv);
 		}
 		else
 			event_base_loopexit(m_base, nullptr);
-	}
-
-	void dispatcher::kill()
-	{
-		event_base_loopbreak(m_base);
 	}
 
 } }

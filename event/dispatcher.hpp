@@ -29,7 +29,7 @@
 #ifndef RANGER_EVENT_DISPATCHER_HPP
 #define RANGER_EVENT_DISPATCHER_HPP
 
-#include <utility>
+#include <chrono>
 
 struct event_base;
 
@@ -46,7 +46,15 @@ namespace ranger { namespace event {
 
 		int run();
 		int run_once(bool is_block = true);
-		void exit(float delay = 0.0f);
+
+		template <class _rep, class _period>
+		void exit(const std::chrono::duration<_rep, _period>& delay = std::chrono::seconds(0))
+		{
+			auto sec = std::chrono::duration_cast<std::chrono::seconds>(delay);
+			auto usec = std::chrono::duration_cast<std::chrono::microseconds>(delay - sec);
+			_exit(sec.count(), usec.count());
+		}
+
 		void kill();
 
 #ifdef RANGER_EVENT_INTERNAL
@@ -55,6 +63,9 @@ namespace ranger { namespace event {
 	private:
 #endif  // RANGER_EVENT_INTERNAL
 		event_base* _event_base() { return m_base; }
+
+	private:
+		void _exit(long sec, long usec);
 
 	private:
 		event_base* m_base;

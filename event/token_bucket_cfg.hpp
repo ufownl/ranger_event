@@ -30,6 +30,7 @@
 #define RANGER_EVENT_TOKEN_BUCKET_CFG_HPP
 
 #include <memory>
+#include <chrono>
 
 struct ev_token_bucket_cfg;
 
@@ -43,16 +44,28 @@ namespace ranger { namespace event {
 		token_bucket_cfg(const token_bucket_cfg&) = delete;
 		token_bucket_cfg& operator = (const token_bucket_cfg&) = delete;
 
-		static std::shared_ptr<const token_bucket_cfg> create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, float period = 0.0f);
+		template <class _rep, class _period>
+		static std::shared_ptr<const token_bucket_cfg> create(
+				size_t read_rate, size_t read_burst,
+				size_t write_rate, size_t write_burst,
+				const std::chrono::duration<_rep, _period>& period = std::chrono::seconds(0))
+		{
+			auto sec = std::chrono::duration_cast<std::chrono::seconds>(period);
+			auto usec = std::chrono::duration_cast<std::chrono::microseconds>(period - sec);
+			return _create(read_rate, read_burst, write_rate, write_burst, sec.count(), usec.count());
+		}
 
 #ifdef RANGER_EVENT_INTERNAL
 	public:
 #else
 	private:
 #endif	// RANGER_EVENT_INTERNAL
-		token_bucket_cfg(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, float period);
+		token_bucket_cfg(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec);
 
 		ev_token_bucket_cfg* _ev_token_bucket_cfg() const { return m_cfg; }
+
+	private:
+		static std::shared_ptr<const token_bucket_cfg> _create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec);
 
 	private:
 		ev_token_bucket_cfg* m_cfg;

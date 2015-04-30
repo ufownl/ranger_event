@@ -30,6 +30,7 @@
 #define RANGER_EVENT_TIMER_HPP
 
 #include <functional>
+#include <chrono>
 
 struct event;
 struct event_base;
@@ -62,7 +63,14 @@ namespace ranger { namespace event {
 		void set_event_handler(T&& handler) { m_event_handler = std::forward<T>(handler); }
 		const event_handler& get_event_handler() const { return m_event_handler; }
 
-		void active(float duration);
+		template <class _rep, class _period>
+		void active(const std::chrono::duration<_rep, _period>& dur)
+		{
+			auto sec = std::chrono::duration_cast<std::chrono::seconds>(dur);
+			auto usec = std::chrono::duration_cast<std::chrono::microseconds>(dur - sec);
+			_active(sec.count(), usec.count());
+		}
+
 		void close() { timer(std::move(*this)); }
 
 	private:
@@ -74,6 +82,7 @@ namespace ranger { namespace event {
 		}
 
 		void _init(event_base* base);
+		void _active(long sec, long usec);
 
 	private:
 		struct event* m_event;

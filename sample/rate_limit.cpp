@@ -10,7 +10,7 @@ public:
 	rate_limit(const char* addr, int port)
 		: m_conn(m_disp, addr, port)
 	{
-		m_conn.set_rate_limit(ranger::event::token_bucket_cfg::create(10, 50, INT_MAX, INT_MAX, 0.2f));
+		m_conn.set_rate_limit(ranger::event::token_bucket_cfg::create(10, 50, INT_MAX, INT_MAX, std::chrono::milliseconds(200)));
 		m_conn.set_event_handler([this] (ranger::event::tcp_connection& conn, ranger::event::tcp_connection::event_code what)
 			{
 				switch (what)
