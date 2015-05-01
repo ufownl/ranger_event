@@ -8,8 +8,9 @@ namespace ranger { namespace util {
 	class scope_guard
 	{
 	public:
-		explicit scope_guard(std::function<void()> handler)
-			: m_exit_handler(handler)
+		template <class T>
+		explicit scope_guard(T&& handler)
+			: m_exit_handler(std::forward<T>(handler))
 			, m_dismiss(false)
 		{
 		}
