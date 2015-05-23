@@ -4,7 +4,7 @@
 #include <event/buffer.hpp>
 #include <iostream>
 #include <vector>
-#include <unordered_set>
+#include <set>
 
 class size_filter : public ranger::event::tcp_connection::filter_handler
 {
@@ -161,7 +161,7 @@ private:
 	ranger::event::tcp_acceptor m_acc;
 	size_t m_size;
 
-	std::unordered_set<ranger::event::tcp_connection> m_conn_set;
+	std::set<ranger::event::tcp_connection> m_conn_set;
 };
 
 int main(int argc, char* argv[])

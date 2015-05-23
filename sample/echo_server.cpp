@@ -3,7 +3,7 @@
 #include <event/tcp_connection.hpp>
 #include <event/buffer.hpp>
 #include <iostream>
-#include <unordered_set>
+#include <set>
 
 class echo_server
 	: public ranger::event::tcp_acceptor::event_handler
@@ -86,7 +86,7 @@ private:
 	ranger::event::dispatcher m_disp;
 	ranger::event::tcp_acceptor m_acc;
 
-	std::unordered_set<ranger::event::tcp_connection> m_conn_set;
+	std::set<ranger::event::tcp_connection> m_conn_set;
 };
 
 int main(int argc, char* argv[])

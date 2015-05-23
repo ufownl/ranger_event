@@ -5,7 +5,7 @@
 #include <util/scope_guard.hpp>
 #include <iostream>
 #include <vector>
-#include <unordered_set>
+#include <set>
 #include <thread>
 
 class echo_server
@@ -83,7 +83,7 @@ private:
 
 private:
 	ranger::event::dispatcher& m_disp;
-	std::unordered_set<ranger::event::tcp_connection> m_conn_set;
+	std::set<ranger::event::tcp_connection> m_conn_set;
 };
 
 class worker
