@@ -78,6 +78,9 @@ namespace ranger { namespace event {
 		void set_event_handler(T&& handler) { m_event_handler = std::forward<T>(handler); }
 		const event_handler& get_event_handler() const { return m_event_handler; }
 
+		void set_extra_data(void* extra) { m_extra_data = extra; }
+		void* get_extra_data() const { return m_extra_data; }
+
 		void close() { tcp_acceptor(std::move(*this)); }
 
 		void swap(tcp_acceptor& rhs)
@@ -96,6 +99,7 @@ namespace ranger { namespace event {
 	private:
 		evconnlistener* m_listener;
 		event_handler m_event_handler;
+		void* m_extra_data = nullptr;
 	};
 
 	inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs)
