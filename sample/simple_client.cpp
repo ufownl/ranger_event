@@ -2,6 +2,7 @@
 #include <event/tcp_connection.hpp>
 #include <event/buffer.hpp>
 #include <iostream>
+#include <vector>
 
 class simple_client : public ranger::event::tcp_connection::event_handler
 {
@@ -38,11 +39,9 @@ public:
 private:
 	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf)
 	{
-		while (buf.size() > 0)
-		{
-			std::string line = buf.readln();
-			if (!line.empty()) std::cout << line << std::endl;
-		}
+		std::vector<char> v(buf.size());
+		buf.remove(&v.front(), v.size());
+		for (auto ch: v) std::cout << ch << std::flush;
 	}
 
 	void handle_connected(ranger::event::tcp_connection& conn)

@@ -45,7 +45,18 @@ namespace ranger { namespace event {
 		using event_handler = std::function<bool(tcp_acceptor&, int)>;
 
 	public:
-		tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog = -1);
+		tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog = -1)
+		{
+			_bind(disp, ep, backlog);
+		}
+
+		template <class T>
+		tcp_acceptor(dispatcher& disp, T&& handler, const endpoint& ep, int backlog = -1)
+		{
+			m_event_handler = std::forward<T>(handler);
+			_bind(disp, ep, backlog);
+		}
+
 		~tcp_acceptor();
 
 		tcp_acceptor(const tcp_acceptor&) = delete;
@@ -94,6 +105,8 @@ namespace ranger { namespace event {
 		}
 
 	private:
+		void _bind(dispatcher& disp, const endpoint& ep, int backlog);
+
 		void _reset_callbacks();
 
 	private:

@@ -71,9 +71,32 @@ namespace ranger { namespace event {
 
 	public:
 		tcp_connection() : m_top_bev(nullptr), m_base_bev(nullptr) {}
-		tcp_connection(dispatcher& disp, const endpoint& ep);
-		tcp_connection(dispatcher& disp, const char* addr, int port);
-		tcp_connection(dispatcher& disp, const std::string& addr, int port);
+		tcp_connection(dispatcher& disp, const endpoint& ep) : tcp_connection(disp) { _connect(ep); }
+		tcp_connection(dispatcher& disp, const char* addr, int port) : tcp_connection(disp) { _connect(addr, port); }
+		tcp_connection(dispatcher& disp, const std::string& addr, int port) : tcp_connection(disp, addr.c_str(), port) {}
+
+		template <class T>
+		tcp_connection(dispatcher& disp, T&& handler, const endpoint& ep)
+			: tcp_connection(disp)
+		{
+			m_event_handler = std::forward<T>(handler);
+			_connect(ep);
+		}
+
+		template <class T>
+		tcp_connection(dispatcher& disp, T&& handler, const char* addr, int port)
+			: tcp_connection(disp)
+		{
+			m_event_handler = std::forward<T>(handler);
+			_connect(addr, port);
+		}
+
+		template <class T>
+		tcp_connection(dispatcher& disp, T&& handler, const std::string& addr, int port)
+			: tcp_connection(disp, std::forward<T>(handler), addr.c_str(), port)
+		{
+		}
+
 		tcp_connection(dispatcher& disp, int fd);
 		~tcp_connection();
 
@@ -170,6 +193,10 @@ namespace ranger { namespace event {
 		
 	private:
 		explicit tcp_connection(bufferevent* bev);
+		explicit tcp_connection(dispatcher& disp);
+
+		void _connect(const endpoint& ep);
+		void _connect(const char* addr, int port);
 
 		void _set_timeouts(long read_sec, long read_usec, long write_sec, long write_usec);
 		void _append_filter(std::unique_ptr<filter_handler> filter);

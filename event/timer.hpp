@@ -45,7 +45,7 @@ namespace ranger { namespace event {
 		using event_handler = std::function<void(timer&)>;
 
 	public:
-		timer(dispatcher& disp);
+		explicit timer(dispatcher& disp);
 
 		template <class T>
 		timer(dispatcher& disp, T&& handler)

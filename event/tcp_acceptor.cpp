@@ -51,13 +51,6 @@ namespace ranger { namespace event {
 
 	}
 
-	tcp_acceptor::tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog /* = -1 */)
-	{
-		m_listener = evconnlistener_new_bind(disp._event_base(), handle_accept, this, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, backlog, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in));
-		if (!m_listener)
-			throw std::runtime_error("evconnlistener create failed.");
-	}
-
 	tcp_acceptor::~tcp_acceptor()
 	{
 		if (m_listener)
@@ -82,6 +75,13 @@ namespace ranger { namespace event {
 		socklen_t len = sizeof(sin);
 		getsockname(fd, (sockaddr*)&sin, &len);
 		return endpoint(sin);
+	}
+
+	void tcp_acceptor::_bind(dispatcher& disp, const endpoint& ep, int backlog)
+	{
+		m_listener = evconnlistener_new_bind(disp._event_base(), handle_accept, this, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, backlog, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in));
+		if (!m_listener)
+			throw std::runtime_error("evconnlistener create failed.");
 	}
 
 	void tcp_acceptor::_reset_callbacks()

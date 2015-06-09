@@ -44,7 +44,7 @@ namespace ranger { namespace event {
 		using event_handler = std::function<void(trigger&)>;
 
 	public:
-		trigger(dispatcher& disp);
+		explicit trigger(dispatcher& disp);
 
 		template <class T>
 		trigger(dispatcher& disp, T&& handler)

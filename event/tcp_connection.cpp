@@ -39,31 +39,6 @@
 
 namespace ranger { namespace event {
 
-	tcp_connection::tcp_connection(dispatcher& disp, const endpoint& ep)
-		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
-	{
-		if (bufferevent_socket_connect(m_base_bev, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in)) == -1)
-		{
-			bufferevent_free(m_top_bev);
-			throw std::runtime_error("bufferevent_socket_connect call failed.");
-		}
-	}
-
-	tcp_connection::tcp_connection(dispatcher& disp, const char* addr, int port)
-		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
-	{
-		if (bufferevent_socket_connect_hostname(m_base_bev, 0, AF_UNSPEC, addr, port) == -1)
-		{
-			bufferevent_free(m_top_bev);
-			throw std::runtime_error("bufferevent_socket_connect_hostname call failed.");
-		}
-	}
-
-	tcp_connection::tcp_connection(dispatcher& disp, const std::string& addr, int port)
-		: tcp_connection(disp, addr.c_str(), port)
-	{
-	}
-
 	tcp_connection::tcp_connection(dispatcher& disp, int fd)
 		: tcp_connection(bufferevent_socket_new(disp._event_base(), fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
 	{
@@ -237,6 +212,29 @@ namespace ranger { namespace event {
 			throw std::runtime_error("bufferevent create failed.");
 
 		_reset_callbacks();
+	}
+
+	tcp_connection::tcp_connection(dispatcher& disp)
+		: tcp_connection(bufferevent_socket_new(disp._event_base(), -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS))
+	{
+	}
+
+	void tcp_connection::_connect(const endpoint& ep)
+	{
+		if (bufferevent_socket_connect(m_base_bev, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in)) == -1)
+		{
+			bufferevent_free(m_top_bev);
+			throw std::runtime_error("bufferevent_socket_connect call failed.");
+		}
+	}
+
+	void tcp_connection::_connect(const char* addr, int port)
+	{
+		if (bufferevent_socket_connect_hostname(m_base_bev, 0, AF_UNSPEC, addr, port) == -1)
+		{
+			bufferevent_free(m_top_bev);
+			throw std::runtime_error("bufferevent_socket_connect_hostname call failed.");
+		}
 	}
 
 	void tcp_connection::_set_timeouts(long read_sec, long read_usec, long write_sec, long write_usec)
