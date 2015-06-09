@@ -47,11 +47,11 @@ namespace ranger { namespace event {
 		std::string addr() const { return inet_ntoa(m_sin.sin_addr); }
 		int port() const { return ntohs(m_sin.sin_port); }
 
-#ifdef RANGER_EVENT_INTERNAL
+#ifdef RANGER_INTERNAL
 	public:
 #else
 	private:
-#endif	// RANGER_EVENT_INTERNAL
+#endif	// RANGER_INTERNAL
 		explicit endpoint(const sockaddr_in& sin)
 			: m_sin(sin)
 		{}

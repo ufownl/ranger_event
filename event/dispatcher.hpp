@@ -57,11 +57,11 @@ namespace ranger { namespace event {
 
 		void kill();
 
-#ifdef RANGER_EVENT_INTERNAL
+#ifdef RANGER_INTERNAL
 	public:
 #else
 	private:
-#endif  // RANGER_EVENT_INTERNAL
+#endif  // RANGER_INTERNAL
 		event_base* _event_base() { return m_base; }
 
 	private:

@@ -55,11 +55,11 @@ namespace ranger { namespace event {
 			return _create(read_rate, read_burst, write_rate, write_burst, sec.count(), usec.count());
 		}
 
-#ifdef RANGER_EVENT_INTERNAL
+#ifdef RANGER_INTERNAL
 	public:
 #else
 	private:
-#endif	// RANGER_EVENT_INTERNAL
+#endif	// RANGER_INTERNAL
 		token_bucket_cfg(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec);
 
 		ev_token_bucket_cfg* _ev_token_bucket_cfg() const { return m_cfg; }

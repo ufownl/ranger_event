@@ -29,13 +29,13 @@
 #ifndef RANGER_EVENT_TCP_CONNECTION_HPP
 #define RANGER_EVENT_TCP_CONNECTION_HPP
 
-#ifdef RANGER_EVENT_INTERNAL
+#ifdef RANGER_INTERNAL
 #include "endpoint.hpp"
 #include "token_bucket_cfg.hpp"
 #else
 #include <event/endpoint.hpp>
 #include <event/token_bucket_cfg.hpp>
-#endif	// RANGER_EVENT_INTERNAL
+#endif	// RANGER_INTERNAL
 #include <functional>
 
 struct bufferevent;

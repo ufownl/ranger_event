@@ -77,11 +77,11 @@ namespace ranger { namespace event {
 			swap(m_flag, rhs.m_flag);
 		}
 
-#ifdef RANGER_EVENT_INTERNAL
+#ifdef RANGER_INTERNAL
 	public:
 #else
 	private:
-#endif	// RANGER_EVENT_INTERNAL
+#endif	// RANGER_INTERNAL
 		explicit buffer(evbuffer* buf)
 			: m_buf(buf)
 			, m_flag(false)
