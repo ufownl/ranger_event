@@ -119,7 +119,7 @@ namespace std
 		using first_argument_type = ranger::event::tcp_acceptor;
 		using second_argument_type = ranger::event::tcp_acceptor;
 
-		bool operator () (const ranger::event::tcp_acceptor& lhs, const ranger::event::tcp_acceptor& rhs) const
+		result_type operator () (const first_argument_type& lhs, const second_argument_type& rhs) const
 		{
 			return lhs.file_descriptor() < rhs.file_descriptor();
 		}
@@ -132,7 +132,7 @@ namespace std
 		using first_argument_type = ranger::event::tcp_acceptor;
 		using second_argument_type = ranger::event::tcp_acceptor;
 
-		bool operator () (const ranger::event::tcp_acceptor& lhs, const ranger::event::tcp_acceptor& rhs) const
+		result_type operator () (const first_argument_type& lhs, const second_argument_type& rhs) const
 		{
 			return lhs.file_descriptor() == rhs.file_descriptor();
 		}
@@ -144,9 +144,9 @@ namespace std
 		using result_type = size_t;
 		using argument_type = ranger::event::tcp_acceptor;
 
-		size_t operator () (const ranger::event::tcp_acceptor& conn)
+		result_type operator () (const argument_type& acc) const
 		{
-			return conn.file_descriptor();
+			return acc.file_descriptor();
 		}
 	};
 
