@@ -1,6 +1,8 @@
 #include <event/dispatcher.hpp>
 #include <event/tcp_connection.hpp>
 #include <event/buffer.hpp>
+#include <limits.h>
+#include <string.h>
 #include <iostream>
 #include <vector>
 

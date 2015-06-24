@@ -35,6 +35,7 @@
 #include <event2/bufferevent.h>
 #include <netinet/tcp.h>
 #include <errno.h>
+#include <string.h>
 #include <stdexcept>
 
 namespace ranger { namespace event {

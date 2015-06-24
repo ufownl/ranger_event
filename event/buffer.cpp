@@ -29,6 +29,8 @@
 #include "buffer.hpp"
 #include <event2/buffer.h>
 #include <stdlib.h>
+#include <stdexcept>
+#include <memory>
 
 namespace ranger { namespace event {
 
