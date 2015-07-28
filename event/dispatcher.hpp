@@ -35,41 +35,41 @@ struct event_base;
 
 namespace ranger { namespace event {
 
-	class dispatcher
-	{
-	public:
-		dispatcher();
-		~dispatcher();
+class dispatcher {
+public:
+	dispatcher();
+	~dispatcher();
 
-		dispatcher(const dispatcher&) = delete;
-		dispatcher& operator = (const dispatcher&) = delete;
+	dispatcher(const dispatcher&) = delete;
+	dispatcher& operator = (const dispatcher&) = delete;
 
-		int run();
-		int run_once(bool is_block = true);
+	int run();
+	int run_once(bool is_block = true);
 
-		template <class _rep, class _period>
-		void exit(const std::chrono::duration<_rep, _period>& delay = std::chrono::seconds(0))
-		{
-			auto sec = std::chrono::duration_cast<std::chrono::seconds>(delay);
-			auto usec = std::chrono::duration_cast<std::chrono::microseconds>(delay - sec);
-			_exit(sec.count(), usec.count());
-		}
+	template <class _rep, class _period>
+	void exit(const std::chrono::duration<_rep, _period>& delay = std::chrono::seconds(0)) {
+		auto sec = std::chrono::duration_cast<std::chrono::seconds>(delay);
+		auto usec = std::chrono::duration_cast<std::chrono::microseconds>(delay - sec);
+		_exit(sec.count(), usec.count());
+	}
 
-		void kill();
+	void kill();
 
 #ifdef RANGER_INTERNAL
-	public:
+public:
 #else
-	private:
+private:
 #endif  // RANGER_INTERNAL
-		event_base* _event_base() { return m_base; }
+	event_base* _event_base() {
+		return m_base;
+	}
 
-	private:
-		void _exit(long sec, long usec);
+private:
+	void _exit(long sec, long usec);
 
-	private:
-		event_base* m_base;
-	};
+private:
+	event_base* m_base;
+};
 
 } }
 

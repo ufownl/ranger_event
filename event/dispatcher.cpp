@@ -34,52 +34,43 @@
 
 namespace ranger { namespace event {
 
-	dispatcher::dispatcher()
-	{
-		static std::once_flag flag;
-		std::call_once(flag, []
-				{
-					if (evthread_use_pthreads() == -1)
-						throw std::runtime_error("evthread_use_pthreads call failed.");
-				});
+dispatcher::dispatcher() {
+	static std::once_flag flag;
+	std::call_once(flag, [] {
+		if (evthread_use_pthreads() == -1)
+		throw std::runtime_error("evthread_use_pthreads call failed.");
+	});
 
-		m_base = event_base_new();
-		if (!m_base)
-			throw std::runtime_error("event_base create faild.");
-	}
+	m_base = event_base_new();
+	if (!m_base)
+		throw std::runtime_error("event_base create faild.");
+}
 
-	dispatcher::~dispatcher()
-	{
-		if (m_base)
-			event_base_free(m_base);
-	}
+dispatcher::~dispatcher() {
+	if (m_base)
+		event_base_free(m_base);
+}
 
-	int dispatcher::run()
-	{
-		return m_base ? event_base_dispatch(m_base) : 1;
-	}
+int dispatcher::run() {
+	return m_base ? event_base_dispatch(m_base) : 1;
+}
 
-	int dispatcher::run_once(bool is_block /* = true */)
-	{
-		return m_base ? event_base_loop(m_base, is_block ? EVLOOP_ONCE : EVLOOP_ONCE | EVLOOP_NONBLOCK) : 1;
-	}
+int dispatcher::run_once(bool is_block /* = true */) {
+	return m_base ? event_base_loop(m_base, is_block ? EVLOOP_ONCE : EVLOOP_ONCE | EVLOOP_NONBLOCK) : 1;
+}
 
-	void dispatcher::kill()
-	{
-		event_base_loopbreak(m_base);
-	}
+void dispatcher::kill() {
+	event_base_loopbreak(m_base);
+}
 
-	void dispatcher::_exit(long sec, long usec)
-	{
-		if (sec > 0 || usec > 0)
-		{
-			timeval tv;
-			tv.tv_sec = sec;
-			tv.tv_usec = usec;
-			event_base_loopexit(m_base, &tv);
-		}
-		else
-			event_base_loopexit(m_base, nullptr);
-	}
+void dispatcher::_exit(long sec, long usec) {
+	if (sec > 0 || usec > 0) {
+		timeval tv;
+		tv.tv_sec = sec;
+		tv.tv_usec = usec;
+		event_base_loopexit(m_base, &tv);
+	} else
+		event_base_loopexit(m_base, nullptr);
+}
 
 } }

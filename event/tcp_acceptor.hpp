@@ -35,133 +35,129 @@ struct evconnlistener;
 
 namespace ranger { namespace event {
 
-	class dispatcher;
-	class endpoint;
-	class tcp_connection;
+class dispatcher;
+class endpoint;
+class tcp_connection;
 
-	class tcp_acceptor
-	{
-	public:
-		using event_handler = std::function<bool(tcp_acceptor&, int)>;
+class tcp_acceptor {
+public:
+	using event_handler = std::function<bool(tcp_acceptor&, int)>;
 
-	public:
-		tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog = -1)
-		{
-			_bind(disp, ep, backlog);
-		}
-
-		template <class T>
-		tcp_acceptor(dispatcher& disp, T&& handler, const endpoint& ep, int backlog = -1)
-		{
-			m_event_handler = std::forward<T>(handler);
-			_bind(disp, ep, backlog);
-		}
-
-		~tcp_acceptor();
-
-		tcp_acceptor(const tcp_acceptor&) = delete;
-		tcp_acceptor& operator = (const tcp_acceptor&) = delete;
-
-		tcp_acceptor(tcp_acceptor&& rhs)
-			: m_listener(rhs.m_listener)
-			, m_event_handler(std::move(rhs.m_event_handler))
-		{
-			_reset_callbacks();
-
-			rhs.m_listener = nullptr;
-		}
-
-		tcp_acceptor& operator = (tcp_acceptor&& rhs)
-		{
-			if (this != &rhs)
-			{
-				tcp_acceptor acc = std::move(rhs);
-				swap(acc);
-			}
-
-			return *this;
-		}
-
-		int file_descriptor() const;
-		endpoint local_endpoint() const;
-
-		template <class T>
-		void set_event_handler(T&& handler) { m_event_handler = std::forward<T>(handler); }
-		const event_handler& get_event_handler() const { return m_event_handler; }
-
-		void set_extra_data(void* extra) { m_extra_data = extra; }
-		void* get_extra_data() const { return m_extra_data; }
-
-		void close() { tcp_acceptor(std::move(*this)); }
-
-		void swap(tcp_acceptor& rhs)
-		{
-			using std::swap;
-			swap(m_listener, rhs.m_listener);
-			swap(m_event_handler, rhs.m_event_handler);
-
-			_reset_callbacks();
-			rhs._reset_callbacks();
-		}
-
-	private:
-		void _bind(dispatcher& disp, const endpoint& ep, int backlog);
-
-		void _reset_callbacks();
-
-	private:
-		evconnlistener* m_listener;
-		event_handler m_event_handler;
-		void* m_extra_data = nullptr;
-	};
-
-	inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs)
-	{
-		lhs.swap(rhs);
+public:
+	tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog = -1) {
+		_bind(disp, ep, backlog);
 	}
+
+	template <class T>
+	tcp_acceptor(dispatcher& disp, T&& handler, const endpoint& ep, int backlog = -1) {
+		m_event_handler = std::forward<T>(handler);
+		_bind(disp, ep, backlog);
+	}
+
+	~tcp_acceptor();
+
+	tcp_acceptor(const tcp_acceptor&) = delete;
+	tcp_acceptor& operator = (const tcp_acceptor&) = delete;
+
+	tcp_acceptor(tcp_acceptor&& rhs)
+		: m_listener(rhs.m_listener)
+		, m_event_handler(std::move(rhs.m_event_handler)) {
+		_reset_callbacks();
+		rhs.m_listener = nullptr;
+	}
+
+	tcp_acceptor& operator = (tcp_acceptor&& rhs) {
+		if (this != &rhs) {
+			tcp_acceptor acc = std::move(rhs);
+			swap(acc);
+		}
+
+		return *this;
+	}
+
+	int file_descriptor() const;
+	endpoint local_endpoint() const;
+
+	template <class T>
+	void set_event_handler(T&& handler) {
+		m_event_handler = std::forward<T>(handler);
+	}
+
+	const event_handler& get_event_handler() const {
+		return m_event_handler;
+	}
+
+	void set_extra_data(void* extra) {
+		m_extra_data = extra;
+	}
+
+	void* get_extra_data() const {
+		return m_extra_data;
+	}
+
+	void close() {
+		tcp_acceptor(std::move(*this));
+	}
+
+	void swap(tcp_acceptor& rhs) {
+		using std::swap;
+		swap(m_listener, rhs.m_listener);
+		swap(m_event_handler, rhs.m_event_handler);
+
+		_reset_callbacks();
+		rhs._reset_callbacks();
+	}
+
+private:
+	void _bind(dispatcher& disp, const endpoint& ep, int backlog);
+
+	void _reset_callbacks();
+
+private:
+	evconnlistener* m_listener;
+	event_handler m_event_handler;
+	void* m_extra_data = nullptr;
+};
+
+inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs) {
+	lhs.swap(rhs);
+}
 
 } }
 
-namespace std
-{
+namespace std {
 
-	template <>
-	struct less<ranger::event::tcp_acceptor>
-	{
-		using result_type = bool;
-		using first_argument_type = ranger::event::tcp_acceptor;
-		using second_argument_type = ranger::event::tcp_acceptor;
+template <>
+struct less<ranger::event::tcp_acceptor> {
+	using result_type = bool;
+	using first_argument_type = ranger::event::tcp_acceptor;
+	using second_argument_type = ranger::event::tcp_acceptor;
 
-		result_type operator () (const first_argument_type& lhs, const second_argument_type& rhs) const
-		{
-			return lhs.file_descriptor() < rhs.file_descriptor();
-		}
-	};
+	result_type operator () (const first_argument_type& lhs, const second_argument_type& rhs) const {
+		return lhs.file_descriptor() < rhs.file_descriptor();
+	}
+};
 
-	template <>
-	struct equal_to<ranger::event::tcp_acceptor>
-	{
-		using result_type = bool;
-		using first_argument_type = ranger::event::tcp_acceptor;
-		using second_argument_type = ranger::event::tcp_acceptor;
+template <>
+struct equal_to<ranger::event::tcp_acceptor> {
+	using result_type = bool;
+	using first_argument_type = ranger::event::tcp_acceptor;
+	using second_argument_type = ranger::event::tcp_acceptor;
 
-		result_type operator () (const first_argument_type& lhs, const second_argument_type& rhs) const
-		{
-			return lhs.file_descriptor() == rhs.file_descriptor();
-		}
-	};
+	result_type operator () (const first_argument_type& lhs, const second_argument_type& rhs) const {
+		return lhs.file_descriptor() == rhs.file_descriptor();
+	}
+};
 
-	template <>
-	struct hash<ranger::event::tcp_acceptor>
-	{
-		using result_type = size_t;
-		using argument_type = ranger::event::tcp_acceptor;
+template <>
+struct hash<ranger::event::tcp_acceptor> {
+	using result_type = size_t;
+	using argument_type = ranger::event::tcp_acceptor;
 
-		result_type operator () (const argument_type& acc) const
-		{
-			return acc.file_descriptor();
-		}
-	};
+	result_type operator () (const argument_type& acc) const {
+		return acc.file_descriptor();
+	}
+};
 
 }
 

@@ -36,40 +36,40 @@ struct ev_token_bucket_cfg;
 
 namespace ranger { namespace event {
 
-	class token_bucket_cfg
-	{
-	public:
-		~token_bucket_cfg();
+class token_bucket_cfg {
+public:
+	~token_bucket_cfg();
 
-		token_bucket_cfg(const token_bucket_cfg&) = delete;
-		token_bucket_cfg& operator = (const token_bucket_cfg&) = delete;
+	token_bucket_cfg(const token_bucket_cfg&) = delete;
+	token_bucket_cfg& operator = (const token_bucket_cfg&) = delete;
 
-		template <class _rep, class _period>
-		static std::shared_ptr<const token_bucket_cfg> create(
-				size_t read_rate, size_t read_burst,
-				size_t write_rate, size_t write_burst,
-				const std::chrono::duration<_rep, _period>& period = std::chrono::seconds(0))
-		{
-			auto sec = std::chrono::duration_cast<std::chrono::seconds>(period);
-			auto usec = std::chrono::duration_cast<std::chrono::microseconds>(period - sec);
-			return _create(read_rate, read_burst, write_rate, write_burst, sec.count(), usec.count());
-		}
+	template <class _rep, class _period>
+	static std::shared_ptr<const token_bucket_cfg>
+	create(	size_t read_rate, size_t read_burst,
+			size_t write_rate, size_t write_burst,
+			const std::chrono::duration<_rep, _period>& period = std::chrono::seconds(0)) {
+		auto sec = std::chrono::duration_cast<std::chrono::seconds>(period);
+		auto usec = std::chrono::duration_cast<std::chrono::microseconds>(period - sec);
+		return _create(read_rate, read_burst, write_rate, write_burst, sec.count(), usec.count());
+	}
 
 #ifdef RANGER_INTERNAL
-	public:
+public:
 #else
-	private:
+private:
 #endif	// RANGER_INTERNAL
-		token_bucket_cfg(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec);
+	token_bucket_cfg(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec);
 
-		ev_token_bucket_cfg* _ev_token_bucket_cfg() const { return m_cfg; }
+	ev_token_bucket_cfg* _ev_token_bucket_cfg() const {
+		return m_cfg;
+	}
 
-	private:
-		static std::shared_ptr<const token_bucket_cfg> _create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec);
+private:
+	static std::shared_ptr<const token_bucket_cfg> _create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec);
 
-	private:
-		ev_token_bucket_cfg* m_cfg;
-	};
+private:
+	ev_token_bucket_cfg* m_cfg;
+};
 
 } }
 

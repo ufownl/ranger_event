@@ -36,49 +36,53 @@ struct event_base;
 
 namespace ranger { namespace event {
 
-	class dispatcher;
+class dispatcher;
 
-	class signal
-	{
-	public:
-		using event_handler = std::function<void(signal&)>;
+class signal {
+public:
+	using event_handler = std::function<void(signal&)>;
 
-	public:
-		signal(dispatcher& disp, int sig);
+public:
+	signal(dispatcher& disp, int sig);
 
-		template <class T>
-		signal(dispatcher& disp, int sig, T&& handler)
-			: signal(disp, sig)
-		{
-			m_event_handler = std::forward<T>(handler);
-		}
+	template <class T>
+	signal(dispatcher& disp, int sig, T&& handler)
+		: signal(disp, sig) {
+		m_event_handler = std::forward<T>(handler);
+	}
 
-		~signal();
+	~signal();
 
-		signal(const signal&) = delete;
-		signal& operator = (const signal&) = delete;
+	signal(const signal&) = delete;
+	signal& operator = (const signal&) = delete;
 
-		template <class T>
-		void set_event_handler(T&& handler) { m_event_handler = std::forward<T>(handler); }
-		const event_handler& get_event_handler() const { return m_event_handler; }
+	template <class T>
+	void set_event_handler(T&& handler) {
+		m_event_handler = std::forward<T>(handler);
+	}
 
-		void active();
-		void close() { signal(std::move(*this)); }
+	const event_handler& get_event_handler() const {
+		return m_event_handler;
+	}
 
-	private:
-		signal(signal&& rhs)
-			: m_event(rhs.m_event)
-			, m_event_handler(std::move(rhs.m_event_handler))
-		{
-			rhs.m_event = nullptr;
-		}
+	void active();
+	void close() {
+		signal(std::move(*this));
+	}
 
-		void _init(event_base* base, int sig);
+private:
+	signal(signal&& rhs)
+		: m_event(rhs.m_event)
+		, m_event_handler(std::move(rhs.m_event_handler)) {
+		rhs.m_event = nullptr;
+	}
 
-	private:
-		struct event* m_event;
-		event_handler m_event_handler;
-	};
+	void _init(event_base* base, int sig);
+
+private:
+	struct event* m_event;
+	event_handler m_event_handler;
+};
 
 } }
 

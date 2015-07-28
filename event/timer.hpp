@@ -37,57 +37,60 @@ struct event_base;
 
 namespace ranger { namespace event {
 
-	class dispatcher;
+class dispatcher;
 
-	class timer
-	{
-	public:
-		using event_handler = std::function<void(timer&)>;
+class timer {
+public:
+	using event_handler = std::function<void(timer&)>;
 
-	public:
-		explicit timer(dispatcher& disp);
+public:
+	explicit timer(dispatcher& disp);
 
-		template <class T>
-		timer(dispatcher& disp, T&& handler)
-			: timer(disp)
-		{
-			m_event_handler = std::forward<T>(handler);
-		}
+	template <class T>
+	timer(dispatcher& disp, T&& handler)
+		: timer(disp) {
+		m_event_handler = std::forward<T>(handler);
+	}
 
-		~timer();
+	~timer();
 
-		timer(const timer&) = delete;
-		timer& operator = (const timer&) = delete;
+	timer(const timer&) = delete;
+	timer& operator = (const timer&) = delete;
 
-		template <class T>
-		void set_event_handler(T&& handler) { m_event_handler = std::forward<T>(handler); }
-		const event_handler& get_event_handler() const { return m_event_handler; }
+	template <class T>
+	void set_event_handler(T&& handler) {
+		m_event_handler = std::forward<T>(handler);
+	}
 
-		template <class _rep, class _period>
-		void active(const std::chrono::duration<_rep, _period>& dur)
-		{
-			auto sec = std::chrono::duration_cast<std::chrono::seconds>(dur);
-			auto usec = std::chrono::duration_cast<std::chrono::microseconds>(dur - sec);
-			_active(sec.count(), usec.count());
-		}
+	const event_handler& get_event_handler() const {
+		return m_event_handler;
+	}
 
-		void close() { timer(std::move(*this)); }
+	template <class _rep, class _period>
+	void active(const std::chrono::duration<_rep, _period>& dur) {
+		auto sec = std::chrono::duration_cast<std::chrono::seconds>(dur);
+		auto usec = std::chrono::duration_cast<std::chrono::microseconds>(dur - sec);
+		_active(sec.count(), usec.count());
+	}
 
-	private:
-		timer(timer&& rhs)
-			: m_event(rhs.m_event)
-			, m_event_handler(std::move(rhs.m_event_handler))
-		{
-			rhs.m_event = nullptr;
-		}
+	void close() {
+		timer(std::move(*this));
+	}
 
-		void _init(event_base* base);
-		void _active(long sec, long usec);
+private:
+	timer(timer&& rhs)
+		: m_event(rhs.m_event)
+		, m_event_handler(std::move(rhs.m_event_handler)) {
+		rhs.m_event = nullptr;
+	}
 
-	private:
-		struct event* m_event;
-		event_handler m_event_handler;
-	};
+	void _init(event_base* base);
+	void _active(long sec, long usec);
+
+private:
+	struct event* m_event;
+	event_handler m_event_handler;
+};
 
 } }
 

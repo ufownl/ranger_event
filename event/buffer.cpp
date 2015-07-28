@@ -34,110 +34,95 @@
 
 namespace ranger { namespace event {
 
-	buffer::buffer()
-		: m_buf(evbuffer_new())
-		, m_flag(true)
-	{
-		if (!m_buf)
-			throw std::runtime_error("evbuffer create failed.");
+buffer::buffer()
+	: m_buf(evbuffer_new())
+	, m_flag(true) {
+	if (!m_buf)
+		throw std::runtime_error("evbuffer create failed.");
+}
+
+buffer::~buffer() {
+	if (m_buf && m_flag)
+		evbuffer_free(m_buf);
+}
+
+bool buffer::append(const void* src, size_t len) {
+	if (!m_buf)
+		return false;
+
+	return evbuffer_add(m_buf, src, len) == 0;
+}
+
+bool buffer::append(buffer& src) {
+	if (!m_buf)
+		return false;
+
+	return evbuffer_add_buffer(m_buf, src.m_buf) == 0;
+}
+
+int buffer::printf(const char* fmt, ...) {
+	int ret = -1;
+
+	if (m_buf) {
+		va_list ap;
+		va_start(ap, fmt);
+		ret = evbuffer_add_vprintf(m_buf, fmt, ap);
+		va_end(ap);
 	}
 
-	buffer::~buffer()
-	{
-		if (m_buf && m_flag)
-			evbuffer_free(m_buf);
+	return ret;
+}
+
+int buffer::vprintf(const char* fmt, va_list ap) {
+	if (!m_buf)
+		return -1;
+
+	return evbuffer_add_vprintf(m_buf, fmt, ap);
+}
+
+int buffer::remove(void* dst, size_t len) {
+	if (!m_buf)
+		return -1;
+
+	return evbuffer_remove(m_buf, dst, len);
+}
+
+int buffer::remove(buffer& dst, size_t len) {
+	if (!m_buf)
+		return -1;
+
+	return evbuffer_remove_buffer(m_buf, dst.m_buf, len);
+}
+
+std::string buffer::readln() {
+	std::string ret;
+
+	if (m_buf) {
+		size_t len = 0;
+		std::unique_ptr<char, decltype(&free)> line(evbuffer_readln(m_buf, &len, EVBUFFER_EOL_CRLF), free);
+		if (len > 0) ret = line.get();
 	}
 
-	bool buffer::append(const void* src, size_t len)
-	{
-		if (!m_buf)
-			return false;
+	return ret;
+}
 
-		return evbuffer_add(m_buf, src, len) == 0;
-	}
+ssize_t buffer::copyout(void* dst, size_t len) const {
+	return evbuffer_copyout(m_buf, dst, len);
+}
 
-	bool buffer::append(buffer& src)
-	{
-		if (!m_buf)
-			return false;
+bool buffer::drain(size_t len) {
+	return evbuffer_drain(m_buf, len) == 0;
+}
 
-		return evbuffer_add_buffer(m_buf, src.m_buf) == 0;
-	}
+size_t buffer::search(const void* src, size_t len, size_t pos /* = 0 */) const {
+	evbuffer_ptr ptr;
+	evbuffer_ptr_set(m_buf, &ptr, pos, EVBUFFER_PTR_SET);
+	ptr = evbuffer_search(m_buf, static_cast<const char*>(src), len, &ptr);
+	return ptr.pos;
+}
 
-	int buffer::printf(const char* fmt, ...)
-	{
-		int ret = -1;
-
-		if (m_buf)
-		{
-			va_list ap;
-			va_start(ap, fmt);
-			ret = evbuffer_add_vprintf(m_buf, fmt, ap);
-			va_end(ap);
-		}
-
-		return ret;
-	}
-
-	int buffer::vprintf(const char* fmt, va_list ap)
-	{
-		if (!m_buf)
-			return -1;
-
-		return evbuffer_add_vprintf(m_buf, fmt, ap);
-	}
-
-	int buffer::remove(void* dst, size_t len)
-	{
-		if (!m_buf)
-			return -1;
-
-		return evbuffer_remove(m_buf, dst, len);
-	}
-
-	int buffer::remove(buffer& dst, size_t len)
-	{
-		if (!m_buf)
-			return -1;
-
-		return evbuffer_remove_buffer(m_buf, dst.m_buf, len);
-	}
-
-	std::string buffer::readln()
-	{
-		std::string ret;
-
-		if (m_buf)
-		{
-			size_t len = 0;
-			std::unique_ptr<char, decltype(&free)> line(evbuffer_readln(m_buf, &len, EVBUFFER_EOL_CRLF), free);
-			if (len > 0) ret = line.get();
-		}
-
-		return ret;
-	}
-
-	ssize_t buffer::copyout(void* dst, size_t len) const
-	{
-		return evbuffer_copyout(m_buf, dst, len);
-	}
-
-	bool buffer::drain(size_t len)
-	{
-		return evbuffer_drain(m_buf, len) == 0;
-	}
-
-	size_t buffer::search(const void* src, size_t len, size_t pos /* = 0 */) const
-	{
-		evbuffer_ptr ptr;
-		evbuffer_ptr_set(m_buf, &ptr, pos, EVBUFFER_PTR_SET);
-		ptr = evbuffer_search(m_buf, static_cast<const char*>(src), len, &ptr);
-		return ptr.pos;
-	}
-
-	size_t buffer::size() const
-	{
-		return evbuffer_get_length(m_buf);
-	}
+size_t buffer::size() const {
+	return evbuffer_get_length(m_buf);
+}
 
 } }

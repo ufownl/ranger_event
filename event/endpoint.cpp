@@ -31,33 +31,29 @@
 
 namespace ranger { namespace event {
 
-	endpoint::endpoint()
-	{
-		memset(&m_sin, 0, sizeof(m_sin));
-	}
+endpoint::endpoint() {
+	memset(&m_sin, 0, sizeof(m_sin));
+}
 
-	endpoint::endpoint(int port)
-		: endpoint()
-	{
-		m_sin.sin_family = AF_INET;
-		m_sin.sin_addr.s_addr = htonl(0);
-		m_sin.sin_port = htons(port);
-	}
+endpoint::endpoint(int port)
+	: endpoint() {
+	m_sin.sin_family = AF_INET;
+	m_sin.sin_addr.s_addr = htonl(0);
+	m_sin.sin_port = htons(port);
+}
 
-	endpoint::endpoint(const char* ip_addr, int port)
-		: endpoint()
-	{
-		m_sin.sin_family = AF_INET;
-		m_sin.sin_addr.s_addr = inet_addr(ip_addr);
-		m_sin.sin_port = htons(port);
-	}
+endpoint::endpoint(const char* ip_addr, int port)
+	: endpoint() {
+	m_sin.sin_family = AF_INET;
+	m_sin.sin_addr.s_addr = inet_addr(ip_addr);
+	m_sin.sin_port = htons(port);
+}
 
-	endpoint::endpoint(const std::string& ip_addr, int port)
-		: endpoint()
-	{
-		m_sin.sin_family = AF_INET;
-		m_sin.sin_addr.s_addr = inet_addr(ip_addr.c_str());
-		m_sin.sin_port = htons(port);
-	}
+endpoint::endpoint(const std::string& ip_addr, int port)
+	: endpoint() {
+	m_sin.sin_family = AF_INET;
+	m_sin.sin_addr.s_addr = inet_addr(ip_addr.c_str());
+	m_sin.sin_port = htons(port);
+}
 
 } }

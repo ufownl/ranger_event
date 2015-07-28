@@ -35,69 +35,70 @@ struct evbuffer;
 
 namespace ranger { namespace event {
 
-	class buffer
-	{
-	public:
-		buffer();
-		~buffer();
+class buffer {
+public:
+	buffer();
+	~buffer();
 
-		buffer(const buffer&) = delete;
-		buffer& operator = (const buffer&) = delete;
+	buffer(const buffer&) = delete;
+	buffer& operator = (const buffer&) = delete;
 
-		buffer(buffer&& rhs) : m_buf(rhs.m_buf), m_flag(rhs.m_flag) { rhs.m_buf = nullptr; }
-		buffer& operator = (buffer&& rhs)
-		{
-			if (this != &rhs)
-			{
-				buffer buf = std::move(rhs);
-				swap(buf);
-			}
+	buffer(buffer&& rhs) : m_buf(rhs.m_buf), m_flag(rhs.m_flag) {
+		rhs.m_buf = nullptr;
+	}
 
-			return *this;
+	buffer& operator = (buffer&& rhs) {
+		if (this != &rhs) {
+			buffer buf = std::move(rhs);
+			swap(buf);
 		}
 
-		bool append(const void* src, size_t len);
-		bool append(buffer& src);
-		int printf(const char* fmt, ...);
-		int vprintf(const char* fmt, va_list ap);
+		return *this;
+	}
 
-		int remove(void* dst, size_t len);
-		int remove(buffer& dst, size_t len);
-		std::string readln();
-		ssize_t copyout(void* dst, size_t len) const;
-		bool drain(size_t len);
+	bool append(const void* src, size_t len);
+	bool append(buffer& src);
+	int printf(const char* fmt, ...);
+	int vprintf(const char* fmt, va_list ap);
 
-		size_t search(const void* src, size_t len, size_t pos = 0) const;
-		size_t size() const;
+	int remove(void* dst, size_t len);
+	int remove(buffer& dst, size_t len);
+	std::string readln();
+	ssize_t copyout(void* dst, size_t len) const;
+	bool drain(size_t len);
 
-		void swap(buffer& rhs)
-		{
-			using std::swap;
-			swap(m_buf, rhs.m_buf);
-			swap(m_flag, rhs.m_flag);
-		}
+	size_t search(const void* src, size_t len, size_t pos = 0) const;
+	size_t size() const;
+
+	void swap(buffer& rhs) {
+		using std::swap;
+		swap(m_buf, rhs.m_buf);
+		swap(m_flag, rhs.m_flag);
+	}
 
 #ifdef RANGER_INTERNAL
-	public:
+public:
 #else
-	private:
+private:
 #endif	// RANGER_INTERNAL
-		explicit buffer(evbuffer* buf)
-			: m_buf(buf)
-			, m_flag(false)
-		{}
-
-		evbuffer* _evbuffer() const { return m_buf; }
-
-	private:
-		evbuffer* m_buf;
-		bool m_flag;
-	};
-
-	inline void swap(buffer& lhs, buffer& rhs)
-	{
-		lhs.swap(rhs);
+	explicit buffer(evbuffer* buf)
+		: m_buf(buf)
+		, m_flag(false) {
+		// nop
 	}
+
+	evbuffer* _evbuffer() const {
+		return m_buf;
+	}
+
+private:
+	evbuffer* m_buf;
+	bool m_flag;
+};
+
+inline void swap(buffer& lhs, buffer& rhs) {
+	lhs.swap(rhs);
+}
 
 } }
 

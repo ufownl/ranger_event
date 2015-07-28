@@ -33,47 +33,38 @@
 
 namespace ranger { namespace event {
 
-	signal::signal(dispatcher& disp, int sig)
-	{
-		_init(disp._event_base(), sig);
+signal::signal(dispatcher& disp, int sig) {
+	_init(disp._event_base(), sig);
+}
+
+signal::~signal() {
+	if (m_event) {
+		event_free(m_event);
 	}
+}
 
-	signal::~signal()
-	{
-		if (m_event)
-		{
-			event_free(m_event);
-		}
+void signal::active() {
+	if (m_event) {
+		event_add(m_event, nullptr);
 	}
+}
 
-	void signal::active()
-	{
-		if (m_event)
-		{
-			event_add(m_event, nullptr);
-		}
+namespace {
+
+void handle_signal(evutil_socket_t fd, short what, void* ctx) {
+	auto sig = static_cast<signal*>(ctx);
+	auto& handler = sig->get_event_handler();
+	if (handler) {
+		handler(*sig);
 	}
+}
 
-	namespace
-	{
+}
 
-		void handle_signal(evutil_socket_t fd, short what, void* ctx)
-		{
-			auto sig = static_cast<signal*>(ctx);
-			auto& handler = sig->get_event_handler();
-			if (handler)
-			{
-				handler(*sig);
-			}
-		}
-
-	}
-
-	void signal::_init(event_base* base, int sig)
-	{
-		m_event = event_new(base, sig, EV_SIGNAL, handle_signal, this);
-		if (!m_event)
-			throw std::runtime_error("event create failed.");
-	}
+void signal::_init(event_base* base, int sig) {
+	m_event = event_new(base, sig, EV_SIGNAL, handle_signal, this);
+	if (!m_event)
+		throw std::runtime_error("event create failed.");
+}
 
 } }

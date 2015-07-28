@@ -2,8 +2,7 @@
 #include <event/tcp_connection.hpp>
 #include <iostream>
 
-int main()
-{
+int main() {
 	ranger::event::dispatcher disp;
 	ranger::event::tcp_connection conn(disp, "www.baidu.com", 80);
 	std::cout << "nodelay: " << conn.get_nodelay() << std::endl;

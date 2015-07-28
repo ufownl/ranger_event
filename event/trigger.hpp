@@ -36,49 +36,53 @@ struct event_base;
 
 namespace ranger { namespace event {
 
-	class dispatcher;
+class dispatcher;
 
-	class trigger
-	{
-	public:
-		using event_handler = std::function<void(trigger&)>;
+class trigger {
+public:
+	using event_handler = std::function<void(trigger&)>;
 
-	public:
-		explicit trigger(dispatcher& disp);
+public:
+	explicit trigger(dispatcher& disp);
 
-		template <class T>
-		trigger(dispatcher& disp, T&& handler)
-			: trigger(disp)
-		{
-			m_event_handler = std::forward<T>(handler);
-		}
+	template <class T>
+	trigger(dispatcher& disp, T&& handler)
+		: trigger(disp) {
+		m_event_handler = std::forward<T>(handler);
+	}
 
-		~trigger();
+	~trigger();
 
-		trigger(const trigger&) = delete;
-		trigger& operator = (const trigger&) = delete;
+	trigger(const trigger&) = delete;
+	trigger& operator = (const trigger&) = delete;
 
-		template <class T>
-		void set_event_handler(T&& handler) { m_event_handler = std::forward<T>(handler); }
-		const event_handler& get_event_handler() const { return m_event_handler; }
+	template <class T>
+	void set_event_handler(T&& handler) {
+		m_event_handler = std::forward<T>(handler);
+	}
 
-		void active();
-		void close() { trigger(std::move(*this)); }
+	const event_handler& get_event_handler() const {
+		return m_event_handler;
+	}
 
-	private:
-		trigger(trigger&& rhs)
-			: m_event(rhs.m_event)
-			, m_event_handler(std::move(rhs.m_event_handler))
-		{
-			rhs.m_event = nullptr;
-		}
+	void active();
+	void close() {
+		trigger(std::move(*this));
+	}
 
-		void _init(event_base* base);
+private:
+	trigger(trigger&& rhs)
+		: m_event(rhs.m_event)
+		, m_event_handler(std::move(rhs.m_event_handler)) {
+		rhs.m_event = nullptr;
+	}
 
-	private:
-		struct event* m_event;
-		event_handler m_event_handler;
-	};
+	void _init(event_base* base);
+
+private:
+	struct event* m_event;
+	event_handler m_event_handler;
+};
 
 } }
 

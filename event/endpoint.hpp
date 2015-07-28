@@ -36,36 +36,42 @@
 
 namespace ranger { namespace event {
 
-	class endpoint
-	{
-	public:
-		endpoint();
-		explicit endpoint(int port);
-		endpoint(const char* ip_addr, int port);
-		endpoint(const std::string& ip_addr, int port);
+class endpoint {
+public:
+	endpoint();
+	explicit endpoint(int port);
+	endpoint(const char* ip_addr, int port);
+	endpoint(const std::string& ip_addr, int port);
 
-		std::string addr() const { return inet_ntoa(m_sin.sin_addr); }
-		int port() const { return ntohs(m_sin.sin_port); }
+	std::string addr() const {
+		return inet_ntoa(m_sin.sin_addr);
+	}
+
+	int port() const {
+		return ntohs(m_sin.sin_port);
+	}
 
 #ifdef RANGER_INTERNAL
-	public:
+public:
 #else
-	private:
+private:
 #endif	// RANGER_INTERNAL
-		explicit endpoint(const sockaddr_in& sin)
-			: m_sin(sin)
-		{}
-
-		const sockaddr_in& _sockaddr_in() const { return m_sin; }
-
-	private:
-		sockaddr_in m_sin;
-	};
-
-	inline std::ostream& operator << (std::ostream& out, const endpoint& ep)
-	{
-		return out << ep.addr() << ":" << ep.port();
+	explicit endpoint(const sockaddr_in& sin)
+		: m_sin(sin) {
+		// nop
 	}
+
+	const sockaddr_in& _sockaddr_in() const {
+		return m_sin;
+	}
+
+private:
+	sockaddr_in m_sin;
+};
+
+inline std::ostream& operator << (std::ostream& out, const endpoint& ep) {
+	return out << ep.addr() << ":" << ep.port();
+}
 
 } }
 
