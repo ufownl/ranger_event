@@ -29,9 +29,11 @@
 #ifndef RANGER_EVENT_BUFFER_HPP
 #define RANGER_EVENT_BUFFER_HPP
 
+#ifndef SWIG
 #include <string>
 
 struct evbuffer;
+#endif	// !SWIG
 
 namespace ranger { namespace event {
 
@@ -40,6 +42,7 @@ public:
 	buffer();
 	~buffer();
 
+#ifndef SWIG
 	buffer(const buffer&) = delete;
 	buffer& operator = (const buffer&) = delete;
 
@@ -55,11 +58,14 @@ public:
 
 		return *this;
 	}
+#endif	// !SWIG
 
 	bool append(const void* src, size_t len);
 	bool append(buffer& src);
+#ifndef SWIG
 	int printf(const char* fmt, ...);
 	int vprintf(const char* fmt, va_list ap);
+#endif	// !SWIG
 
 	int remove(void* dst, size_t len);
 	int remove(buffer& dst, size_t len);
@@ -70,6 +76,7 @@ public:
 	size_t search(const void* src, size_t len, size_t pos = 0) const;
 	size_t size() const;
 
+#ifndef SWIG
 	void swap(buffer& rhs) {
 		using std::swap;
 		swap(m_buf, rhs.m_buf);
@@ -94,11 +101,14 @@ private:
 private:
 	evbuffer* m_buf;
 	bool m_flag;
+#endif	// !SWIG
 };
 
+#ifndef SWIG
 inline void swap(buffer& lhs, buffer& rhs) {
 	lhs.swap(rhs);
 }
+#endif	// !SWIG
 
 } }
 
