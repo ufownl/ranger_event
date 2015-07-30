@@ -29,9 +29,11 @@
 #ifndef RANGER_EVENT_DISPATCHER_HPP
 #define RANGER_EVENT_DISPATCHER_HPP
 
+#ifndef SWIG
 #include <chrono>
 
 struct event_base;
+#endif	// !SWIG
 
 namespace ranger { namespace event {
 
@@ -40,21 +42,26 @@ public:
 	dispatcher();
 	~dispatcher();
 
+#ifndef SWIG
 	dispatcher(const dispatcher&) = delete;
 	dispatcher& operator = (const dispatcher&) = delete;
+#endif	// !SWIG
 
 	int run();
 	int run_once(bool is_block = true);
 
+#ifndef SWIG
 	template <class _rep, class _period>
 	void exit(const std::chrono::duration<_rep, _period>& delay = std::chrono::seconds(0)) {
 		auto sec = std::chrono::duration_cast<std::chrono::seconds>(delay);
 		auto usec = std::chrono::duration_cast<std::chrono::microseconds>(delay - sec);
 		_exit(sec.count(), usec.count());
 	}
+#endif	// !SWIG
 
 	void kill();
 
+#ifndef SWIG
 #ifdef RANGER_INTERNAL
 public:
 #else
@@ -69,6 +76,7 @@ private:
 
 private:
 	event_base* m_base;
+#endif	// !SWIG
 };
 
 } }

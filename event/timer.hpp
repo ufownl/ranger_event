@@ -29,34 +29,43 @@
 #ifndef RANGER_EVENT_TIMER_HPP
 #define RANGER_EVENT_TIMER_HPP
 
+#ifndef SWIG
 #include <functional>
 #include <chrono>
 
 struct event;
 struct event_base;
+#endif	// !SWIG
 
 namespace ranger { namespace event {
 
+#ifndef SWIG
 class dispatcher;
+#endif	// !SWIG
 
 class timer {
+#ifndef SWIG
 public:
 	using event_handler = std::function<void(timer&)>;
+#endif	// !SWIG
 
 public:
 	explicit timer(dispatcher& disp);
 
+#ifndef SWIG
 	template <class T>
 	timer(dispatcher& disp, T&& handler)
 		: timer(disp) {
 		m_event_handler = std::forward<T>(handler);
 	}
+#endif	// !SWIG
 
 	~timer();
 
 	timer(const timer&) = delete;
 	timer& operator = (const timer&) = delete;
 
+#ifndef SWIG
 	template <class T>
 	void set_event_handler(T&& handler) {
 		m_event_handler = std::forward<T>(handler);
@@ -72,11 +81,13 @@ public:
 		auto usec = std::chrono::duration_cast<std::chrono::microseconds>(dur - sec);
 		_active(sec.count(), usec.count());
 	}
+#endif	// !SWIG
 
 	void close() {
 		timer(std::move(*this));
 	}
 
+#ifndef SWIG
 private:
 	timer(timer&& rhs)
 		: m_event(rhs.m_event)
@@ -90,6 +101,7 @@ private:
 private:
 	struct event* m_event;
 	event_handler m_event_handler;
+#endif	// !SWIG
 };
 
 } }
