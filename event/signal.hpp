@@ -26,36 +26,47 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef RANGER_EVENT_TRIGGER_HPP
-#define RANGER_EVENT_TRIGGER_HPP
+#ifndef RANGER_EVENT_SIGNAL_HPP
+#define RANGER_EVENT_SIGNAL_HPP
 
+#ifndef SWIG
 #include <functional>
 
 struct event;
 struct event_base;
+#endif	// !SWIG
 
 namespace ranger { namespace event {
 
+#ifndef SWIG
 class dispatcher;
+#endif	// !SWIG
 
 class signal {
+#ifndef SWIG
 public:
 	using event_handler = std::function<void(signal&)>;
+#endif	// !SWIG
 
 public:
 	signal(dispatcher& disp, int sig);
 
+#ifndef SWIG
 	template <class T>
 	signal(dispatcher& disp, int sig, T&& handler)
 		: signal(disp, sig) {
 		m_event_handler = std::forward<T>(handler);
 	}
+#endif	// !SWIG
 
 	~signal();
 
+#ifndef SWIG
 	signal(const signal&) = delete;
 	signal& operator = (const signal&) = delete;
+#endif	// !SWIG
 
+#ifndef SWIG
 	template <class T>
 	void set_event_handler(T&& handler) {
 		m_event_handler = std::forward<T>(handler);
@@ -64,12 +75,14 @@ public:
 	const event_handler& get_event_handler() const {
 		return m_event_handler;
 	}
+#endif	// !SWIG
 
 	void active();
 	void close() {
 		signal(std::move(*this));
 	}
 
+#ifndef SWIG
 private:
 	signal(signal&& rhs)
 		: m_event(rhs.m_event)
@@ -82,8 +95,9 @@ private:
 private:
 	struct event* m_event;
 	event_handler m_event_handler;
+#endif	// !SWIG
 };
 
 } }
 
-#endif	// RANGER_EVENT_TRIGGER_HPP
+#endif	// RANGER_EVENT_SIGNAL_HPP
