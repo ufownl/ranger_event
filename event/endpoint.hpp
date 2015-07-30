@@ -29,19 +29,25 @@
 #ifndef RANGER_EVENT_ENDPOINT_HPP
 #define RANGER_EVENT_ENDPOINT_HPP
 
+#ifndef SWIG
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string>
 #include <iostream>
+#endif	// !SWIG
 
 namespace ranger { namespace event {
 
 class endpoint {
 public:
+#ifndef SWIG
 	endpoint();
+#endif	// !SWIG
 	explicit endpoint(int port);
 	endpoint(const char* ip_addr, int port);
+#ifndef SWIG
 	endpoint(const std::string& ip_addr, int port);
+#endif	// !SWIG
 
 	std::string addr() const {
 		return inet_ntoa(m_sin.sin_addr);
@@ -51,6 +57,7 @@ public:
 		return ntohs(m_sin.sin_port);
 	}
 
+#ifndef SWIG
 #ifdef RANGER_INTERNAL
 public:
 #else
@@ -67,11 +74,14 @@ private:
 
 private:
 	sockaddr_in m_sin;
+#endif	// !SWIG
 };
 
+#ifndef SWIG
 inline std::ostream& operator << (std::ostream& out, const endpoint& ep) {
 	return out << ep.addr() << ":" << ep.port();
 }
+#endif	// !SWIG
 
 } }
 

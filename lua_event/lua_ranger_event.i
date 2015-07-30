@@ -5,3 +5,4 @@
 %include "trigger.i"
 %include "signal.i"
 %include "buffer.i"
+%include "endpoint.i"
