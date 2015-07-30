@@ -2,3 +2,4 @@
 
 %include "dispatcher.i"
 %include "timer.i"
+%include "trigger.i"

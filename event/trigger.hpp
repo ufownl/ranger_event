@@ -29,30 +29,39 @@
 #ifndef RANGER_EVENT_TRIGGER_HPP
 #define RANGER_EVENT_TRIGGER_HPP
 
+#ifndef SWIG
 #include <functional>
 
 struct event;
 struct event_base;
+#endif	// !SWIG
 
 namespace ranger { namespace event {
 
+#ifndef SWIG
 class dispatcher;
+#endif	// !SWIG
 
 class trigger {
+#ifndef SWIG
 public:
 	using event_handler = std::function<void(trigger&)>;
+#endif	// !SWIG
 
 public:
 	explicit trigger(dispatcher& disp);
 
+#ifndef SWIG
 	template <class T>
 	trigger(dispatcher& disp, T&& handler)
 		: trigger(disp) {
 		m_event_handler = std::forward<T>(handler);
 	}
+#endif	// !SWIG
 
 	~trigger();
 
+#ifndef SWIG
 	trigger(const trigger&) = delete;
 	trigger& operator = (const trigger&) = delete;
 
@@ -64,12 +73,14 @@ public:
 	const event_handler& get_event_handler() const {
 		return m_event_handler;
 	}
+#endif	// !SWIG
 
 	void active();
 	void close() {
 		trigger(std::move(*this));
 	}
 
+#ifndef SWIG
 private:
 	trigger(trigger&& rhs)
 		: m_event(rhs.m_event)
@@ -82,6 +93,7 @@ private:
 private:
 	struct event* m_event;
 	event_handler m_event_handler;
+#endif	// !SWIG
 };
 
 } }
