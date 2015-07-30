@@ -29,10 +29,12 @@
 #ifndef RANGER_EVENT_TOKEN_BUCKET_CFG_HPP
 #define RANGER_EVENT_TOKEN_BUCKET_CFG_HPP
 
+#ifndef SWIG
 #include <memory>
 #include <chrono>
 
 struct ev_token_bucket_cfg;
+#endif	// !SWIG
 
 namespace ranger { namespace event {
 
@@ -40,6 +42,7 @@ class token_bucket_cfg {
 public:
 	~token_bucket_cfg();
 
+#ifndef SWIG
 	token_bucket_cfg(const token_bucket_cfg&) = delete;
 	token_bucket_cfg& operator = (const token_bucket_cfg&) = delete;
 
@@ -69,6 +72,7 @@ private:
 
 private:
 	ev_token_bucket_cfg* m_cfg;
+#endif	// !SWIG
 };
 
 } }
