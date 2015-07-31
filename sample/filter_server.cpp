@@ -63,9 +63,7 @@ private:
 	}
 };
 
-class filter_server
-	: public ranger::event::tcp_acceptor::event_handler
-	, public ranger::event::tcp_connection::event_handler {
+class filter_server {
 public:
 	filter_server(int port, size_t sz)
 		: m_acc(m_disp, ranger::event::endpoint(port))

@@ -5,9 +5,7 @@
 #include <iostream>
 #include <set>
 
-class echo_server
-	: public ranger::event::tcp_acceptor::event_handler
-	, public ranger::event::tcp_connection::event_handler {
+class echo_server {
 public:
 	explicit echo_server(int port)
 		: m_acc(m_disp, ranger::event::endpoint(port)) {

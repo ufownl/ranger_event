@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 
-class simple_client : public ranger::event::tcp_connection::event_handler {
+class simple_client {
 public:
 	simple_client(const char* addr, int port)
 		: m_conn(m_disp, addr, port) {

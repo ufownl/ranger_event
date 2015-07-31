@@ -29,33 +29,42 @@
 #ifndef RANGER_EVENT_TCP_ACCEPTOR_HPP
 #define RANGER_EVENT_TCP_ACCEPTOR_HPP
 
+#ifndef SWIG
 #include <functional>
 
 struct evconnlistener;
+#endif	// !SWIG
 
 namespace ranger { namespace event {
 
+#ifndef SWIG
 class dispatcher;
 class endpoint;
 class tcp_connection;
+#endif	// !SWIG
 
 class tcp_acceptor {
+#ifndef SWIG
 public:
 	using event_handler = std::function<bool(tcp_acceptor&, int)>;
+#endif	// !SWIG
 
 public:
 	tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog = -1) {
 		_bind(disp, ep, backlog);
 	}
 
+#ifndef SWIG
 	template <class T>
 	tcp_acceptor(dispatcher& disp, T&& handler, const endpoint& ep, int backlog = -1) {
 		m_event_handler = std::forward<T>(handler);
 		_bind(disp, ep, backlog);
 	}
+#endif	// !SWIG
 
 	~tcp_acceptor();
 
+#ifndef SWIG
 	tcp_acceptor(const tcp_acceptor&) = delete;
 	tcp_acceptor& operator = (const tcp_acceptor&) = delete;
 
@@ -74,10 +83,12 @@ public:
 
 		return *this;
 	}
+#endif	// !SWIG
 
 	int file_descriptor() const;
 	endpoint local_endpoint() const;
 
+#ifndef SWIG
 	template <class T>
 	void set_event_handler(T&& handler) {
 		m_event_handler = std::forward<T>(handler);
@@ -86,6 +97,7 @@ public:
 	const event_handler& get_event_handler() const {
 		return m_event_handler;
 	}
+#endif	// !SWIG
 
 	void set_extra_data(void* extra) {
 		m_extra_data = extra;
@@ -99,6 +111,7 @@ public:
 		tcp_acceptor(std::move(*this));
 	}
 
+#ifndef SWIG
 	void swap(tcp_acceptor& rhs) {
 		using std::swap;
 		swap(m_listener, rhs.m_listener);
@@ -117,14 +130,18 @@ private:
 	evconnlistener* m_listener;
 	event_handler m_event_handler;
 	void* m_extra_data = nullptr;
+#endif	// !SWIG
 };
 
+#ifndef SWIG
 inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs) {
 	lhs.swap(rhs);
 }
+#endif	// !SWIG
 
 } }
 
+#ifndef SWIG
 namespace std {
 
 template <>
@@ -160,5 +177,6 @@ struct hash<ranger::event::tcp_acceptor> {
 };
 
 }
+#endif	// !SWIG
 
 #endif	// RANGER_EVENT_TCP_ACCEPTOR_HPP

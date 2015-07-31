@@ -122,9 +122,7 @@ private:
 	echo_server m_server { m_disp };
 };
 
-class fd_dispatcher
-	: public ranger::event::tcp_acceptor::event_handler
-	, public ranger::event::tcp_connection::event_handler {
+class fd_dispatcher {
 public:
 	fd_dispatcher(int port, size_t thread_cnt)
 		: m_acc(m_disp, ranger::event::endpoint(port)) {

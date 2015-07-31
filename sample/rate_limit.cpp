@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-class rate_limit : public ranger::event::tcp_connection::event_handler {
+class rate_limit {
 public:
 	rate_limit(const char* addr, int port)
 		: m_conn(m_disp, addr, port) {
