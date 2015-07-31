@@ -43,7 +43,6 @@ public:
 	~buffer();
 
 #ifndef SWIG
-	buffer(const buffer&) = delete;
 	buffer& operator = (const buffer&) = delete;
 
 	buffer(buffer&& rhs) : m_buf(rhs.m_buf), m_flag(rhs.m_flag) {
@@ -96,6 +95,18 @@ private:
 
 	evbuffer* _evbuffer() const {
 		return m_buf;
+	}
+
+#ifdef RANGER_SWIG_INTERNAL
+public:
+#else
+private:
+#endif
+	// Only for SWIG
+	buffer(const buffer& rhs)
+		: m_buf(rhs.m_buf)
+		, m_flag(false) {
+		// nop
 	}
 
 private:

@@ -2,10 +2,8 @@
 #include <event/token_bucket_cfg.hpp>
 %}
 
-%ignore ranger::event::token_bucket_cfg;
+%ignore ranger::event::token_bucket_cfg::token_bucket_cfg();
 %include "event/token_bucket_cfg.hpp"
-
-%shared_ptr(ranger::event::token_bucket_cfg);
 
 %{
 #include <chrono>

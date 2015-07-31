@@ -2,7 +2,7 @@
 #include <event/trigger.hpp>
 %}
 
-%include "lua_fnptr.i"
+%include <lua_fnptr.i>
 %include "event/trigger.hpp"
 
 %extend ranger::event::trigger {

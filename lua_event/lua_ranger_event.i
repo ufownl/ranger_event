@@ -7,3 +7,4 @@
 %include "buffer.i"
 %include "endpoint.i"
 %include "token_bucket_cfg.i"
+%include "tcp_connection.i"

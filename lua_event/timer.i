@@ -2,7 +2,7 @@
 #include <event/timer.hpp>
 %}
 
-%include "lua_fnptr.i"
+%include <lua_fnptr.i>
 %include "event/timer.hpp"
 
 %extend ranger::event::timer {

@@ -29,6 +29,7 @@
 #ifndef RANGER_EVENT_TCP_CONNECTION_HPP
 #define RANGER_EVENT_TCP_CONNECTION_HPP
 
+#ifndef SWIG
 #ifdef RANGER_INTERNAL
 #include "endpoint.hpp"
 #include "token_bucket_cfg.hpp"
@@ -40,11 +41,14 @@
 
 struct bufferevent;
 struct event_base;
+#endif	// !SWIG
 
 namespace ranger { namespace event {
 
+#ifndef SWIG
 class buffer;
 class dispatcher;
+#endif	// !SWIG
 
 class tcp_connection {
 public:
@@ -58,6 +62,7 @@ public:
 		invalid
 	};
 
+#ifndef SWIG
 	using event_handler = std::function<void(tcp_connection&, event_code)>;
 
 	struct filter_handler {
@@ -65,6 +70,7 @@ public:
 		virtual bool handle_input(buffer&&, buffer&&) = 0;
 		virtual bool handle_output(buffer&&, buffer&&) = 0;
 	};
+#endif	// !SWIG
 
 public:
 	tcp_connection()
@@ -83,6 +89,7 @@ public:
 		_connect(addr, port);
 	}
 
+#ifndef SWIG
 	tcp_connection(dispatcher& disp, const std::string& addr, int port)
 		: tcp_connection(disp, addr.c_str(), port) {
 		// nop
@@ -106,10 +113,12 @@ public:
 	tcp_connection(dispatcher& disp, T&& handler, const std::string& addr, int port)
 		: tcp_connection(disp, std::forward<T>(handler), addr.c_str(), port) {
 	}
+#endif	// !SWIG
 
 	tcp_connection(dispatcher& disp, int fd);
 	~tcp_connection();
 
+#ifndef SWIG
 	tcp_connection(const tcp_connection&) = delete;
 	tcp_connection& operator = (const tcp_connection&) = delete;
 
@@ -136,11 +145,13 @@ public:
 	
 	static std::pair<tcp_connection, tcp_connection> create_pair(dispatcher& first_disp, dispatcher& second_disp);
 	static std::pair<tcp_connection, tcp_connection> create_pair(dispatcher& disp);
+#endif	// !SWIG
 	static void file_descriptor_close(int fd);
 
 	buffer read_buffer();
 	buffer write_buffer();
 
+#ifndef SWIG
 	template <class _read_rep, class _read_period, class _write_rep, class _write_period>
 	void set_timeouts(const std::chrono::duration<_read_rep, _read_period>& read_timeout, const std::chrono::duration<_write_rep, _write_period>& write_timeout) {
 		auto read_sec = std::chrono::duration_cast<std::chrono::seconds>(read_timeout);
@@ -149,6 +160,7 @@ public:
 		auto write_usec = std::chrono::duration_cast<std::chrono::microseconds>(write_timeout - write_sec);
 		_set_timeouts(read_sec.count(), read_usec.count(), write_sec.count(), write_usec.count());
 	}
+#endif	// !SWIG
 
 	void set_rate_limit(std::shared_ptr<const token_bucket_cfg> cfg);
 	void reset_rate_limit();
@@ -167,6 +179,7 @@ public:
 	static int error_code();
 	static const char* error_description();
 
+#ifndef SWIG
 	template <class T, class... ARGS>
 	void append_filter(ARGS&&... args) {
 		if (m_top_bev)
@@ -181,6 +194,7 @@ public:
 	const event_handler& get_event_handler() const {
 		return m_event_handler;
 	}
+#endif	// !SWIG
 
 	void set_extra_data(void* extra) {
 		m_extra_data = extra;
@@ -194,6 +208,7 @@ public:
 		tcp_connection(std::move(*this));
 	}
 
+#ifndef SWIG
 	void swap(tcp_connection& rhs) {
 		using std::swap;
 		swap(m_top_bev, rhs.m_top_bev);
@@ -223,6 +238,7 @@ private:
 	std::shared_ptr<const token_bucket_cfg> m_token_bucket;
 	event_handler m_event_handler;
 	void* m_extra_data = nullptr;
+#endif	// !SWIG
 };
 
 inline void swap(tcp_connection& lhs, tcp_connection& rhs) {
@@ -231,6 +247,7 @@ inline void swap(tcp_connection& lhs, tcp_connection& rhs) {
 
 } }
 
+#ifndef SWIG
 namespace std {
 
 template <>
@@ -266,5 +283,6 @@ struct hash<ranger::event::tcp_connection> {
 };
 
 }
+#endif	// !SWIG
 
 #endif	// RANGER_EVENT_TCP_CONNECTION_HPP

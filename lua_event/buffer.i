@@ -2,10 +2,10 @@
 #include <event/buffer.hpp>
 %}
 
-%include "carrays.i"
+%include <carrays.i>
 %array_class(unsigned char, byte_array);
 
-%include "cdata.i"
+%include <cdata.i>
 
 %{
 #include <string.h>
@@ -17,7 +17,7 @@ SWIGCDATA str2cdata(char* str) {
 
 SWIGCDATA str2cdata(char* str);
 
-%include "std_string.i"
+%include <std_string.i>
 %include "event/buffer.hpp"
 
 %extend ranger::event::buffer {

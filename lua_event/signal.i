@@ -2,7 +2,7 @@
 #include <event/signal.hpp>
 %}
 
-%include "lua_fnptr.i"
+%include <lua_fnptr.i>
 %include "event/signal.hpp"
 
 %extend ranger::event::signal {
