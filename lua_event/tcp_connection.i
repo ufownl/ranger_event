@@ -1,8 +1,9 @@
 %{
 #include <event/tcp_connection.hpp>
+#include <memory>
 %}
 
-%include <lua_fnptr.i>
+%include "swiglua_ref.i"
 %include "event/tcp_connection.hpp"
 
 %extend ranger::event::tcp_connection {
@@ -11,12 +12,13 @@
     }
 
     void set_event_handler(SWIGLUA_REF fn) {
-        self->set_event_handler([fn] (  ranger::event::tcp_connection& self,
-                                        ranger::event::tcp_connection::event_code what) mutable {
-            swiglua_ref_get(&fn);
-            SWIG_NewPointerObj(fn.L, &self, SWIGTYPE_p_ranger__event__tcp_connection, 0);
-            lua_pushnumber(fn.L, static_cast<lua_Number>(what));
-            lua_call(fn.L, 2, 0);
+        auto ref = std::make_shared<swiglua_ref>(fn);
+        self->set_event_handler([ref] (  ranger::event::tcp_connection& self,
+                                        ranger::event::tcp_connection::event_code what) {
+            ref->get();
+            SWIG_NewPointerObj(ref->L(), &self, SWIGTYPE_p_ranger__event__tcp_connection, 0);
+            lua_pushnumber(ref->L(), static_cast<lua_Number>(what));
+            lua_call(ref->L(), 2, 0);
         });
     }
 }

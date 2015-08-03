@@ -1,16 +1,18 @@
 %{
 #include <event/timer.hpp>
+#include <memory>
 %}
 
-%include <lua_fnptr.i>
+%include "swiglua_ref.i"
 %include "event/timer.hpp"
 
 %extend ranger::event::timer {
     void set_event_handler(SWIGLUA_REF fn) {
-        self->set_event_handler([fn] (ranger::event::timer& self) mutable {
-            swiglua_ref_get(&fn);
-            SWIG_NewPointerObj(fn.L, &self, SWIGTYPE_p_ranger__event__timer, 0);
-            lua_call(fn.L, 1, 0);
+        auto ref = std::make_shared<swiglua_ref>(fn);
+        self->set_event_handler([ref] (ranger::event::timer& self) {
+            ref->get();
+            SWIG_NewPointerObj(ref->L(), &self, SWIGTYPE_p_ranger__event__timer, 0);
+            lua_call(ref->L(), 1, 0);
         });
     }
 
