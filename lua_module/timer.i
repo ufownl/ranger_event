@@ -1,10 +1,10 @@
 %{
-#include <event/timer.hpp>
+#include <ranger/event/timer.hpp>
 #include <memory>
 %}
 
 %include "swiglua_ref.i"
-%include "event/timer.hpp"
+%include "ranger/event/timer.hpp"
 
 %extend ranger::event::timer {
     void set_event_handler(SWIGLUA_REF fn) {

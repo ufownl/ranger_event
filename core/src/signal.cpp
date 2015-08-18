@@ -26,33 +26,45 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "token_bucket_cfg.hpp"
-#include <event2/bufferevent.h>
+#include "ranger/event/signal.hpp"
+#include "ranger/event/dispatcher.hpp"
+#include <event2/event.h>
 #include <stdexcept>
 
 namespace ranger { namespace event {
 
-token_bucket_cfg::~token_bucket_cfg() {
-	if (m_cfg)
-		ev_token_bucket_cfg_free(m_cfg);
+signal::signal(dispatcher& disp, int sig) {
+	_init(disp._event_base(), sig);
 }
 
-token_bucket_cfg::token_bucket_cfg(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec) {
-	if (sec > 0 || usec > 0) {
-		timeval tv;
-		tv.tv_sec = sec;
-		tv.tv_usec = usec;
-
-		m_cfg = ev_token_bucket_cfg_new(read_rate, read_burst, write_rate, write_burst, &tv);
-	} else
-		m_cfg = ev_token_bucket_cfg_new(read_rate, read_burst, write_rate, write_burst, nullptr);
-
-	if (!m_cfg)
-		throw std::runtime_error("ev_token_bucket_cfg_new call failed.");
+signal::~signal() {
+	if (m_event) {
+		event_free(m_event);
+	}
 }
 
-std::shared_ptr<const token_bucket_cfg> token_bucket_cfg::_create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec) {
-	return std::make_shared<const token_bucket_cfg>(read_rate, read_burst, write_rate, write_burst, sec, usec);
+void signal::active() {
+	if (m_event) {
+		event_add(m_event, nullptr);
+	}
+}
+
+namespace {
+
+void handle_signal(evutil_socket_t fd, short what, void* ctx) {
+	auto sig = static_cast<signal*>(ctx);
+	auto& handler = sig->get_event_handler();
+	if (handler) {
+		handler(*sig);
+	}
+}
+
+}
+
+void signal::_init(event_base* base, int sig) {
+	m_event = event_new(base, sig, EV_SIGNAL, handle_signal, this);
+	if (!m_event)
+		throw std::runtime_error("event create failed.");
 }
 
 } }

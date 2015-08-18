@@ -26,7 +26,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "buffer.hpp"
+#include "ranger/event/buffer.hpp"
 #include <event2/buffer.h>
 #include <stdlib.h>
 #include <stdexcept>

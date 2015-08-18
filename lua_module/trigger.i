@@ -1,10 +1,10 @@
 %{
-#include <event/trigger.hpp>
+#include <ranger/event/trigger.hpp>
 #include <memory>
 %}
 
 %include "swiglua_ref.i"
-%include "event/trigger.hpp"
+%include "ranger/event/trigger.hpp"
 
 %extend ranger::event::trigger {
     void set_event_handler(SWIGLUA_REF fn) {

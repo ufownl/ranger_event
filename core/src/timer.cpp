@@ -26,51 +26,48 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "dispatcher.hpp"
+#include "ranger/event/timer.hpp"
+#include "ranger/event/dispatcher.hpp"
 #include <event2/event.h>
-#include <event2/thread.h>
-#include <mutex>
 #include <stdexcept>
 
 namespace ranger { namespace event {
 
-dispatcher::dispatcher() {
-	static std::once_flag flag;
-	std::call_once(flag, [] {
-		if (evthread_use_pthreads() == -1)
-		throw std::runtime_error("evthread_use_pthreads call failed.");
-	});
-
-	m_base = event_base_new();
-	if (!m_base)
-		throw std::runtime_error("event_base create faild.");
+timer::timer(dispatcher& disp) {
+	_init(disp._event_base());
 }
 
-dispatcher::~dispatcher() {
-	if (m_base)
-		event_base_free(m_base);
+timer::~timer() {
+	if (m_event)
+		event_free(m_event);
 }
 
-int dispatcher::run() {
-	return m_base ? event_base_dispatch(m_base) : 1;
+namespace {
+
+void handle_expire(evutil_socket_t fd, short what, void* ctx) {
+	auto tmr = static_cast<timer*>(ctx);
+	auto& handler = tmr->get_event_handler();
+	if (handler)
+		handler(*tmr);
 }
 
-int dispatcher::run_once(bool is_block /* = true */) {
-	return m_base ? event_base_loop(m_base, is_block ? EVLOOP_ONCE : EVLOOP_ONCE | EVLOOP_NONBLOCK) : 1;
 }
 
-void dispatcher::kill() {
-	event_base_loopbreak(m_base);
+void timer::_init(event_base* base) {
+	m_event = event_new(base, -1, 0, handle_expire, this);
+	if (!m_event)
+		throw std::runtime_error("event create failed.");
 }
 
-void dispatcher::_exit(long sec, long usec) {
-	if (sec > 0 || usec > 0) {
+void timer::_active(long sec, long usec) {
+	if (sec > 0 || usec > 0)
+	{
 		timeval tv;
 		tv.tv_sec = sec;
 		tv.tv_usec = usec;
-		event_base_loopexit(m_base, &tv);
-	} else
-		event_base_loopexit(m_base, nullptr);
+
+		event_add(m_event, &tv);
+	}
 }
 
 } }

@@ -1,6 +1,6 @@
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-INCLUDE_DIRECTORIES(${EVENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${EVENT_SOURCE_DIR}/core)
 
 ADD_EXECUTABLE(simple_client simple_client.cpp)
 TARGET_LINK_LIBRARIES(simple_client ranger_event)

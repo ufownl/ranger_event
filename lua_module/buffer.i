@@ -1,5 +1,5 @@
 %{
-#include <event/buffer.hpp>
+#include <ranger/event/buffer.hpp>
 %}
 
 %include <carrays.i>
@@ -18,7 +18,7 @@ SWIGCDATA str2cdata(char* str) {
 SWIGCDATA str2cdata(char* str);
 
 %include <std_string.i>
-%include "event/buffer.hpp"
+%include "ranger/event/buffer.hpp"
 
 %extend ranger::event::buffer {
     bool append(SWIGCDATA cdata) {

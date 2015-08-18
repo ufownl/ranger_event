@@ -26,11 +26,11 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "tcp_connection.hpp"
-#include "dispatcher.hpp"
-#include "endpoint.hpp"
-#include "buffer.hpp"
-#include "../util/scope_guard.hpp"
+#include "ranger/event/tcp_connection.hpp"
+#include "ranger/event/dispatcher.hpp"
+#include "ranger/event/endpoint.hpp"
+#include "ranger/event/buffer.hpp"
+#include "ranger/util/scope_guard.hpp"
 #include <event2/event.h>
 #include <event2/bufferevent.h>
 #include <netinet/tcp.h>

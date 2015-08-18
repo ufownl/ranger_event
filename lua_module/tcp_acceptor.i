@@ -1,10 +1,10 @@
 %{
-#include <event/tcp_acceptor.hpp>
+#include <ranger/event/tcp_acceptor.hpp>
 #include <memory>
 %}
 
 %include "swiglua_ref.i"
-%include "event/tcp_acceptor.hpp"
+%include "ranger/event/tcp_acceptor.hpp"
 
 %extend ranger::event::tcp_acceptor {
     void set_event_handler(SWIGLUA_REF fn) {

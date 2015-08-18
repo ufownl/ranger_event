@@ -26,42 +26,33 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "trigger.hpp"
-#include "dispatcher.hpp"
-#include <event2/event.h>
+#include "ranger/event/token_bucket_cfg.hpp"
+#include <event2/bufferevent.h>
 #include <stdexcept>
 
 namespace ranger { namespace event {
 
-trigger::trigger(dispatcher& disp) {
-	_init(disp._event_base());
+token_bucket_cfg::~token_bucket_cfg() {
+	if (m_cfg)
+		ev_token_bucket_cfg_free(m_cfg);
 }
 
-trigger::~trigger() {
-	if (m_event)
-		event_free(m_event);
+token_bucket_cfg::token_bucket_cfg(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec) {
+	if (sec > 0 || usec > 0) {
+		timeval tv;
+		tv.tv_sec = sec;
+		tv.tv_usec = usec;
+
+		m_cfg = ev_token_bucket_cfg_new(read_rate, read_burst, write_rate, write_burst, &tv);
+	} else
+		m_cfg = ev_token_bucket_cfg_new(read_rate, read_burst, write_rate, write_burst, nullptr);
+
+	if (!m_cfg)
+		throw std::runtime_error("ev_token_bucket_cfg_new call failed.");
 }
 
-void trigger::active() {
-	if (m_event)
-		event_active(m_event, EV_WRITE, 0);
-}
-
-namespace {
-
-	void handle_touch(evutil_socket_t fd, short what, void* ctx) {
-		auto tr = static_cast<trigger*>(ctx);
-		auto& handler = tr->get_event_handler();
-		if (handler)
-			handler(*tr);
-	}
-
-}
-
-void trigger::_init(event_base* base) {
-	m_event = event_new(base, -1, 0, handle_touch, this);
-	if (!m_event)
-		throw std::runtime_error("event create failed.");
+std::shared_ptr<const token_bucket_cfg> token_bucket_cfg::_create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec) {
+	return std::make_shared<const token_bucket_cfg>(read_rate, read_burst, write_rate, write_burst, sec, usec);
 }
 
 } }

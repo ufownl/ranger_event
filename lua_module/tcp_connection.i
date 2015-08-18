@@ -1,5 +1,5 @@
 %{
-#include <event/tcp_connection.hpp>
+#include <ranger/event/tcp_connection.hpp>
 #include <memory>
 %}
 
@@ -40,7 +40,7 @@ private:
 };
 %}
 
-%include "event/tcp_connection.hpp"
+%include "ranger/event/tcp_connection.hpp"
 
 %extend ranger::event::tcp_connection {
     void set_timeouts(double rd_sec, double wt_sec) {

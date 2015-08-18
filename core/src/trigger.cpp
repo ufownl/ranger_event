@@ -26,61 +26,42 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "tcp_acceptor.hpp"
-#include "dispatcher.hpp"
-#include "endpoint.hpp"
-#include "tcp_connection.hpp"
-#include "../util/scope_guard.hpp"
-#include <event2/listener.h>
+#include "ranger/event/trigger.hpp"
+#include "ranger/event/dispatcher.hpp"
+#include <event2/event.h>
 #include <stdexcept>
 
 namespace ranger { namespace event {
 
+trigger::trigger(dispatcher& disp) {
+	_init(disp._event_base());
+}
+
+trigger::~trigger() {
+	if (m_event)
+		event_free(m_event);
+}
+
+void trigger::active() {
+	if (m_event)
+		event_active(m_event, EV_WRITE, 0);
+}
+
 namespace {
 
-void handle_accept(evconnlistener* listener, evutil_socket_t fd, sockaddr* addr, int socklen, void* ctx) {
-	util::scope_guard fd_guard([fd] { evutil_closesocket(fd); });
-
-	auto acc = static_cast<tcp_acceptor*>(ctx);
-	auto& handler = acc->get_event_handler();
-	if (handler && handler(*acc, fd))
-		fd_guard.dismiss();
-}
+	void handle_touch(evutil_socket_t fd, short what, void* ctx) {
+		auto tr = static_cast<trigger*>(ctx);
+		auto& handler = tr->get_event_handler();
+		if (handler)
+			handler(*tr);
+	}
 
 }
 
-tcp_acceptor::~tcp_acceptor() {
-	if (m_listener)
-		evconnlistener_free(m_listener);
-}
-
-int tcp_acceptor::file_descriptor() const {
-	if (!m_listener)
-		return -1;
-
-	return evconnlistener_get_fd(m_listener);
-}
-
-endpoint tcp_acceptor::local_endpoint() const {
-	evutil_socket_t fd = file_descriptor();
-	if (fd == -1)
-		return endpoint();
-
-	sockaddr_in sin;
-	socklen_t len = sizeof(sin);
-	getsockname(fd, (sockaddr*)&sin, &len);
-	return endpoint(sin);
-}
-
-void tcp_acceptor::_bind(dispatcher& disp, const endpoint& ep, int backlog) {
-	m_listener = evconnlistener_new_bind(disp._event_base(), handle_accept, this, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, backlog, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in));
-	if (!m_listener)
-		throw std::runtime_error("evconnlistener create failed.");
-}
-
-void tcp_acceptor::_reset_callbacks() {
-	if (m_listener)
-		evconnlistener_set_cb(m_listener, handle_accept, this);
+void trigger::_init(event_base* base) {
+	m_event = event_new(base, -1, 0, handle_touch, this);
+	if (!m_event)
+		throw std::runtime_error("event create failed.");
 }
 
 } }

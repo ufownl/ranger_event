@@ -30,13 +30,8 @@
 #define RANGER_EVENT_TCP_CONNECTION_HPP
 
 #ifndef SWIG
-#ifdef RANGER_INTERNAL
-#include "endpoint.hpp"
-#include "token_bucket_cfg.hpp"
-#else
-#include <event/endpoint.hpp>
-#include <event/token_bucket_cfg.hpp>
-#endif	// RANGER_INTERNAL
+#include "ranger/event/endpoint.hpp"
+#include "ranger/event/token_bucket_cfg.hpp"
 #include <functional>
 
 struct bufferevent;

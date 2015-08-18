@@ -1,9 +1,9 @@
 %{
-#include <event/token_bucket_cfg.hpp>
+#include <ranger/event/token_bucket_cfg.hpp>
 %}
 
 %ignore ranger::event::token_bucket_cfg::token_bucket_cfg();
-%include "event/token_bucket_cfg.hpp"
+%include "ranger/event/token_bucket_cfg.hpp"
 
 %{
 #include <chrono>

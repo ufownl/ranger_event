@@ -1,8 +1,8 @@
 %{
-#include <event/dispatcher.hpp>
+#include <ranger/event/dispatcher.hpp>
 %}
 
-%include "event/dispatcher.hpp"
+%include "ranger/event/dispatcher.hpp"
 
 %extend ranger::event::dispatcher {
     void exit(double sec) {

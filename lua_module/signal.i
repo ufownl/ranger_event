@@ -1,10 +1,10 @@
 %{
-#include <event/signal.hpp>
+#include <ranger/event/signal.hpp>
 #include <memory>
 %}
 
 %include "swiglua_ref.i"
-%include "event/signal.hpp"
+%include "ranger/event/signal.hpp"
 
 %extend ranger::event::signal {
     void set_event_handler(SWIGLUA_REF fn) {
