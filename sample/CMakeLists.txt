@@ -1,43 +1,9 @@
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
+AUX_SOURCE_DIRECTORY(. SAMPLE_SOURCES)
 INCLUDE_DIRECTORIES(${EVENT_SOURCE_DIR}/core)
 
-ADD_EXECUTABLE(simple_client simple_client.cpp)
-TARGET_LINK_LIBRARIES(simple_client ranger_event)
-ADD_DEPENDENCIES(simple_client ranger_event)
-
-ADD_EXECUTABLE(rate_limit rate_limit.cpp)
-TARGET_LINK_LIBRARIES(rate_limit ranger_event)
-ADD_DEPENDENCIES(rate_limit ranger_event)
-
-ADD_EXECUTABLE(echo_server echo_server.cpp)
-TARGET_LINK_LIBRARIES(echo_server ranger_event)
-ADD_DEPENDENCIES(echo_server ranger_event)
-
-ADD_EXECUTABLE(filter_server filter_server.cpp)
-TARGET_LINK_LIBRARIES(filter_server ranger_event)
-ADD_DEPENDENCIES(filter_server ranger_event)
-
-ADD_EXECUTABLE(trigger_event trigger_event.cpp)
-TARGET_LINK_LIBRARIES(trigger_event ranger_event)
-ADD_DEPENDENCIES(trigger_event ranger_event)
-
-ADD_EXECUTABLE(timer_event timer_event.cpp)
-TARGET_LINK_LIBRARIES(timer_event ranger_event)
-ADD_DEPENDENCIES(timer_event ranger_event)
-
-ADD_EXECUTABLE(signal_event signal_event.cpp)
-TARGET_LINK_LIBRARIES(signal_event ranger_event)
-ADD_DEPENDENCIES(signal_event ranger_event)
-
-ADD_EXECUTABLE(connection_pair connection_pair.cpp)
-TARGET_LINK_LIBRARIES(connection_pair ranger_event)
-ADD_DEPENDENCIES(connection_pair ranger_event)
-
-ADD_EXECUTABLE(connection_nodelay connection_nodelay.cpp)
-TARGET_LINK_LIBRARIES(connection_nodelay ranger_event)
-ADD_DEPENDENCIES(connection_nodelay ranger_event)
-
-ADD_EXECUTABLE(concurrent_echo_server concurrent_echo_server.cpp)
-TARGET_LINK_LIBRARIES(concurrent_echo_server ranger_event)
-ADD_DEPENDENCIES(concurrent_echo_server ranger_event)
+FOREACH(SRC ${SAMPLE_SOURCES})
+	STRING(REGEX REPLACE ".*/(.*)\\.cpp$" "\\1" TGT ${SRC})
+	ADD_EXECUTABLE(${TGT} ${SRC})
+	TARGET_LINK_LIBRARIES(${TGT} ranger_event)
+	ADD_DEPENDENCIES(${TGT} ranger_event)
+ENDFOREACH()
