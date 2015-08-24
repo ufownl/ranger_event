@@ -31,41 +31,40 @@
 #include <event2/event.h>
 #include <stdexcept>
 
-namespace ranger { namespace event {
-
-signal::signal(dispatcher& disp, int sig) {
-	init(disp.backend(), sig);
-}
-
-signal::~signal() {
-	if (m_event) {
-		event_free(m_event);
-	}
-}
-
-void signal::active() {
-	if (m_event) {
-		event_add(m_event, nullptr);
-	}
-}
+namespace ranger { namespace event { namespace detail {
 
 namespace {
 
 void handle_signal(evutil_socket_t fd, short what, void* ctx) {
-	auto sig = static_cast<signal*>(ctx);
-	auto& handler = sig->get_event_handler();
-	if (handler) {
-		handler(*sig);
+	auto impl = static_cast<signal_impl*>(ctx);
+	auto hdl = impl->get_handle();
+	if (hdl) {
+		auto& handler = hdl->get_event_handler();
+		if (handler) {
+			handler(*hdl);
+		}
 	}
 }
 
 }
 
-void signal::init(event_base* base, int sig) {
-	m_event = event_new(base, sig, EV_SIGNAL, handle_signal, this);
+signal_impl::signal_impl(dispatcher& disp, int sig) {
+	m_event = event_new(disp.backend(), sig, EV_SIGNAL, handle_signal, this);
 	if (!m_event) {
 		throw std::runtime_error("event create failed.");
 	}
 }
 
-} }
+signal_impl::~signal_impl() {
+	if (m_event) {
+		event_free(m_event);
+	}
+}
+
+void signal_impl::active() {
+	if (m_event) {
+		event_add(m_event, nullptr);
+	}
+}
+
+} } }

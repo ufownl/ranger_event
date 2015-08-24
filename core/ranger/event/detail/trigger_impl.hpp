@@ -26,46 +26,43 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "ranger/event/trigger.hpp"
-#include "ranger/event/dispatcher.hpp"
-#include <event2/event.h>
-#include <stdexcept>
+#ifndef RANGER_EVENT_DETAIL_TRIGGER_IMPL_HPP
+#define RANGER_EVENT_DETAIL_TRIGGER_IMPL_HPP
+
+struct event;
 
 namespace ranger { namespace event {
 
-trigger::trigger(dispatcher& disp) {
-	init(disp.backend());
-}
+class dispatcher;
+class trigger;
 
-trigger::~trigger() {
-	if (m_event) {
-		event_free(m_event);
-	}
-}
+namespace detail {
 
-void trigger::active() {
-	if (m_event) {
-		event_active(m_event, EV_WRITE, 0);
-	}
-}
+class trigger_impl {
+public:
+	explicit trigger_impl(dispatcher& disp);
+	~trigger_impl();
 
-namespace {
+	trigger_impl(const trigger_impl&) = delete;
+	trigger_impl& operator = (const trigger_impl&) = delete;
 
-	void handle_touch(evutil_socket_t fd, short what, void* ctx) {
-		auto tr = static_cast<trigger*>(ctx);
-		auto& handler = tr->get_event_handler();
-		if (handler) {
-			handler(*tr);
-		}
+	void set_handle(trigger* hdl) {
+		m_handle = hdl;
 	}
 
-}
-
-void trigger::init(event_base* base) {
-	m_event = event_new(base, -1, 0, handle_touch, this);
-	if (!m_event) {
-		throw std::runtime_error("event create failed.");
+	trigger* get_handle() const {
+		return m_handle;
 	}
+
+	void active();
+
+private:
+	trigger* m_handle {nullptr};
+	struct event* m_event;
+};
+
 }
 
 } }
+
+#endif	// RANGER_EVENT_DETAIL_TRIGGER_IMPL_HPP

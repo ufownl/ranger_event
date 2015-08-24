@@ -30,10 +30,9 @@
 #define RANGER_EVENT_SIGNAL_HPP
 
 #ifndef SWIG
+#include "ranger/event/detail/signal_impl.hpp"
 #include <functional>
-
-struct event;
-struct event_base;
+#include <memory>
 #endif	// !SWIG
 
 namespace ranger { namespace event {
@@ -48,7 +47,10 @@ public:
 	using event_handler = std::function<void(signal&)>;
 #endif	// !SWIG
 
-	signal(dispatcher& disp, int sig);
+	signal(dispatcher& disp, int sig)
+		: m_impl(new detail::signal_impl(disp, sig)) {
+		m_impl->set_handle(this);
+	}
 
 #ifndef SWIG
 	template <class T>
@@ -56,16 +58,27 @@ public:
 		: signal(disp, sig) {
 		m_event_handler = std::forward<T>(handler);
 	}
-#endif	// !SWIG
 
-	~signal();
-
-#ifndef SWIG
 	signal(const signal&) = delete;
 	signal& operator = (const signal&) = delete;
-#endif	// !SWIG
 
-#ifndef SWIG
+	signal(signal&& rhs) noexcept
+		: m_impl(std::move(rhs.m_impl))
+		, m_event_handler(std::move(rhs.m_event_handler)) {
+		if (m_impl) {
+			m_impl->set_handle(this);
+		}
+	}
+
+	signal& operator = (signal&& rhs) noexcept {
+		if (this != &rhs) {
+			auto tmp = std::move(rhs);
+			swap(tmp);
+		}
+
+		return *this;
+	}
+
 	template <class T>
 	void set_event_handler(T&& handler) {
 		m_event_handler = std::forward<T>(handler);
@@ -76,25 +89,44 @@ public:
 	}
 #endif	// !SWIG
 
-	void active();
+	void active() {
+		if (m_impl) {
+			m_impl->active();
+		}
+	}
+
 	void close() {
 		signal(std::move(*this));
 	}
 
 #ifndef SWIG
-private:
-	signal(signal&& rhs)
-		: m_event(rhs.m_event)
-		, m_event_handler(std::move(rhs.m_event_handler)) {
-		rhs.m_event = nullptr;
+	void swap(signal& rhs) noexcept {
+		if (this != &rhs) {
+			using std::swap;
+			swap(m_impl, rhs.m_impl);
+			swap(m_event_handler, rhs.m_event_handler);
+
+			if (m_impl) {
+				m_impl->set_handle(this);
+			}
+
+			if (rhs.m_impl) {
+				rhs.m_impl->set_handle(&rhs);
+			}
+		}
 	}
 
-	void init(event_base* base, int sig);
-
-	struct event* m_event;
+private:
+	std::unique_ptr<detail::signal_impl> m_impl;
 	event_handler m_event_handler;
 #endif	// !SWIG
 };
+
+#ifndef SWIG
+inline void swap(signal& lhs, signal& rhs) noexcept {
+	lhs.swap(rhs);
+}
+#endif	// !SWIG
 
 } }
 

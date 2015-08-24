@@ -30,10 +30,9 @@
 #define RANGER_EVENT_TRIGGER_HPP
 
 #ifndef SWIG
+#include "ranger/event/detail/trigger_impl.hpp"
 #include <functional>
-
-struct event;
-struct event_base;
+#include <memory>
 #endif	// !SWIG
 
 namespace ranger { namespace event {
@@ -48,7 +47,10 @@ public:
 	using event_handler = std::function<void(trigger&)>;
 #endif	// !SWIG
 
-	explicit trigger(dispatcher& disp);
+	explicit trigger(dispatcher& disp)
+		: m_impl(new detail::trigger_impl(disp)) {
+		m_impl->set_handle(this);
+	}
 
 #ifndef SWIG
 	template <class T>
@@ -56,13 +58,26 @@ public:
 		: trigger(disp) {
 		m_event_handler = std::forward<T>(handler);
 	}
-#endif	// !SWIG
 
-	~trigger();
-
-#ifndef SWIG
 	trigger(const trigger&) = delete;
 	trigger& operator = (const trigger&) = delete;
+
+	trigger(trigger&& rhs) noexcept
+		: m_impl(std::move(rhs.m_impl))
+		, m_event_handler(std::move(rhs.m_event_handler)) {
+		if (m_impl) {
+			m_impl->set_handle(this);
+		}
+	}
+
+	trigger& operator = (trigger&& rhs) noexcept {
+		if (this != &rhs) {
+			auto tmp = std::move(rhs);
+			swap(tmp);
+		}
+
+		return *this;
+	}
 
 	template <class T>
 	void set_event_handler(T&& handler) {
@@ -74,25 +89,44 @@ public:
 	}
 #endif	// !SWIG
 
-	void active();
+	void active() {
+		if (m_impl) {
+			m_impl->active();
+		}
+	}
+
 	void close() {
 		trigger(std::move(*this));
 	}
 
 #ifndef SWIG
-private:
-	trigger(trigger&& rhs)
-		: m_event(rhs.m_event)
-		, m_event_handler(std::move(rhs.m_event_handler)) {
-		rhs.m_event = nullptr;
+	void swap(trigger& rhs) noexcept {
+		if (this != &rhs) {
+			using std::swap;
+			swap(m_impl, rhs.m_impl);
+			swap(m_event_handler, rhs.m_event_handler);
+
+			if (m_impl) {
+				m_impl->set_handle(this);
+			}
+
+			if (rhs.m_impl) {
+				rhs.m_impl->set_handle(&rhs);
+			}
+		}
 	}
 
-	void init(event_base* base);
-
-	struct event* m_event;
+private:
+	std::unique_ptr<detail::trigger_impl> m_impl;
 	event_handler m_event_handler;
 #endif	// !SWIG
 };
+
+#ifndef SWIG
+inline void swap(trigger& lhs, trigger& rhs) noexcept {
+	lhs.swap(rhs);
+}
+#endif	// !SWIG
 
 } }
 

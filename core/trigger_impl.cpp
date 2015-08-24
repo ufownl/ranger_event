@@ -26,50 +26,45 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "ranger/event/timer.hpp"
+#include "ranger/event/trigger.hpp"
 #include "ranger/event/dispatcher.hpp"
 #include <event2/event.h>
 #include <stdexcept>
 
-namespace ranger { namespace event {
-
-timer::timer(dispatcher& disp) {
-	init(disp.backend());
-}
-
-timer::~timer() {
-	if (m_event) {
-		event_free(m_event);
-	}
-}
+namespace ranger { namespace event { namespace detail {
 
 namespace {
 
-void handle_expire(evutil_socket_t fd, short what, void* ctx) {
-	auto tmr = static_cast<timer*>(ctx);
-	auto& handler = tmr->get_event_handler();
-	if (handler) {
-		handler(*tmr);
+void handle_touch(evutil_socket_t fd, short what, void* ctx) {
+	auto impl = static_cast<trigger_impl*>(ctx);
+	auto hdl = impl->get_handle();
+	if (hdl) {
+		auto& handler = hdl->get_event_handler();
+		if (handler) {
+			handler(*hdl);
+		}
 	}
 }
 
 }
 
-void timer::init(event_base* base) {
-	m_event = event_new(base, -1, 0, handle_expire, this);
+trigger_impl::trigger_impl(dispatcher& disp) {
+	m_event = event_new(disp.backend(), -1, 0, handle_touch, this);
 	if (!m_event) {
 		throw std::runtime_error("event create failed.");
 	}
 }
 
-void timer::active_impl(long sec, long usec) {
-	if (sec > 0 || usec > 0) {
-		timeval tv;
-		tv.tv_sec = sec;
-		tv.tv_usec = usec;
-
-		event_add(m_event, &tv);
+trigger_impl::~trigger_impl() {
+	if (m_event) {
+		event_free(m_event);
 	}
 }
 
-} }
+void trigger_impl::active() {
+	if (m_event) {
+		event_active(m_event, EV_WRITE, 0);
+	}
+}
+
+} } }

@@ -26,112 +26,52 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef RANGER_EVENT_TIMER_HPP
-#define RANGER_EVENT_TIMER_HPP
+#ifndef RANGER_EVENT_DETAIL_TIMER_IMPL_HPP
+#define RANGER_EVENT_DETAIL_TIMER_IMPL_HPP
 
-#ifndef SWIG
-#include "ranger/event/detail/timer_impl.hpp"
-#include <functional>
-#include <memory>
 #include <chrono>
-#endif	// !SWIG
+
+struct event;
 
 namespace ranger { namespace event {
 
-#ifndef SWIG
 class dispatcher;
-#endif	// !SWIG
+class timer;
 
-class timer {
+namespace detail {
+
+class timer_impl {
 public:
-#ifndef SWIG
-	using event_handler = std::function<void(timer&)>;
-#endif	// !SWIG
+	explicit timer_impl(dispatcher& disp);
+	~timer_impl();
 
-	explicit timer(dispatcher& disp)
-		: m_impl(new detail::timer_impl(disp)) {
-		m_impl->set_handle(this);
+	timer_impl(const timer_impl&) = delete;
+	timer_impl& operator = (const timer_impl&) = delete;
+
+	void set_handle(timer* hdl) {
+		m_handle = hdl;
 	}
 
-#ifndef SWIG
-	template <class T>
-	timer(dispatcher& disp, T&& handler)
-		: timer(disp) {
-		m_event_handler = std::forward<T>(handler);
-	}
-#endif	// !SWIG
-
-	timer(const timer&) = delete;
-	timer& operator = (const timer&) = delete;
-
-	timer(timer&& rhs) noexcept
-		: m_impl(std::move(rhs.m_impl))
-		, m_event_handler(std::move(rhs.m_event_handler)) {
-		if (m_impl) {
-			m_impl->set_handle(this);
-		}
-	}
-
-	timer& operator = (timer&& rhs) noexcept {
-		if (this != &rhs) {
-			auto tmp = std::move(rhs);
-			swap(tmp);
-		}
-
-		return *this;
-	}
-
-#ifndef SWIG
-	template <class T>
-	void set_event_handler(T&& handler) {
-		m_event_handler = std::forward<T>(handler);
-	}
-
-	const event_handler& get_event_handler() const {
-		return m_event_handler;
+	timer* get_handle() const {
+		return m_handle;
 	}
 
 	template <class Rep, class Period>
 	void active(const std::chrono::duration<Rep, Period>& dur) {
-		if (m_impl) {
-			m_impl->active(dur);
-		}
-	}
-#endif	// !SWIG
-
-	void close() {
-		timer(std::move(*this));
-	}
-
-#ifndef SWIG
-	void swap(timer& rhs) noexcept {
-		if (this != &rhs) {
-			using std::swap;
-			swap(m_impl, rhs.m_impl);
-			swap(m_event_handler, rhs.m_event_handler);
-
-			if (m_impl) {
-				m_impl->set_handle(this);
-			}
-
-			if (rhs.m_impl) {
-				rhs.m_impl->set_handle(&rhs);
-			}
-		}
+		auto sec = std::chrono::duration_cast<std::chrono::seconds>(dur);
+		auto usec = std::chrono::duration_cast<std::chrono::microseconds>(dur - sec);
+		active_impl(sec.count(), usec.count());
 	}
 
 private:
-	std::unique_ptr<detail::timer_impl> m_impl;
-	event_handler m_event_handler;
-#endif	// !SWIG
+	void active_impl(long sec, long usec);
+
+	timer* m_handle {nullptr};
+	struct event* m_event;
 };
 
-#ifndef SWIG
-inline void swap(timer& lhs, timer& rhs) noexcept {
-	lhs.swap(rhs);
 }
-#endif	// !SWIG
 
 } }
 
-#endif	// RANGER_EVENT_TIMER_HPP
+#endif	// RANGER_EVENT_DETAIL_TIMER_IMPL_HPP
