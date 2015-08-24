@@ -116,7 +116,7 @@ public:
 	tcp_connection(const tcp_connection&) = delete;
 	tcp_connection& operator = (const tcp_connection&) = delete;
 
-	tcp_connection(tcp_connection&& rhs)
+	tcp_connection(tcp_connection&& rhs) noexcept
 		: m_top_bev(rhs.m_top_bev)
 		, m_base_bev(rhs.m_base_bev)
 		, m_token_bucket(std::move(rhs.m_token_bucket))
@@ -128,7 +128,7 @@ public:
 		rhs.m_extra_data = nullptr;
 	}
 
-	tcp_connection& operator = (tcp_connection&& rhs) {
+	tcp_connection& operator = (tcp_connection&& rhs) noexcept {
 		if (this != &rhs) {
 			tcp_connection conn = std::move(rhs);
 			swap(conn);
@@ -205,7 +205,7 @@ public:
 	}
 
 #ifndef SWIG
-	void swap(tcp_connection& rhs) {
+	void swap(tcp_connection& rhs) noexcept {
 		using std::swap;
 		swap(m_top_bev, rhs.m_top_bev);
 		swap(m_base_bev, rhs.m_base_bev);
@@ -236,7 +236,7 @@ private:
 #endif	// !SWIG
 };
 
-inline void swap(tcp_connection& lhs, tcp_connection& rhs) {
+inline void swap(tcp_connection& lhs, tcp_connection& rhs) noexcept {
 	lhs.swap(rhs);
 }
 

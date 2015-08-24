@@ -45,11 +45,13 @@ public:
 #ifndef SWIG
 	buffer& operator = (const buffer&) = delete;
 
-	buffer(buffer&& rhs) : m_buf(rhs.m_buf), m_flag(rhs.m_flag) {
+	buffer(buffer&& rhs) noexcept
+		: m_buf(rhs.m_buf)
+		, m_flag(rhs.m_flag) {
 		rhs.m_buf = nullptr;
 	}
 
-	buffer& operator = (buffer&& rhs) {
+	buffer& operator = (buffer&& rhs) noexcept {
 		if (this != &rhs) {
 			buffer buf = std::move(rhs);
 			swap(buf);
@@ -76,7 +78,7 @@ public:
 	size_t size() const;
 
 #ifndef SWIG
-	void swap(buffer& rhs) {
+	void swap(buffer& rhs) noexcept {
 		using std::swap;
 		swap(m_buf, rhs.m_buf);
 		swap(m_flag, rhs.m_flag);
@@ -116,7 +118,7 @@ private:
 };
 
 #ifndef SWIG
-inline void swap(buffer& lhs, buffer& rhs) {
+inline void swap(buffer& lhs, buffer& rhs) noexcept {
 	lhs.swap(rhs);
 }
 #endif	// !SWIG

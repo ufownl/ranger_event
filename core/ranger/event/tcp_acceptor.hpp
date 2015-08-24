@@ -67,14 +67,14 @@ public:
 	tcp_acceptor(const tcp_acceptor&) = delete;
 	tcp_acceptor& operator = (const tcp_acceptor&) = delete;
 
-	tcp_acceptor(tcp_acceptor&& rhs)
+	tcp_acceptor(tcp_acceptor&& rhs) noexcept
 		: m_listener(rhs.m_listener)
 		, m_event_handler(std::move(rhs.m_event_handler)) {
 		reset_callbacks();
 		rhs.m_listener = nullptr;
 	}
 
-	tcp_acceptor& operator = (tcp_acceptor&& rhs) {
+	tcp_acceptor& operator = (tcp_acceptor&& rhs) noexcept {
 		if (this != &rhs) {
 			tcp_acceptor acc = std::move(rhs);
 			swap(acc);
@@ -111,7 +111,7 @@ public:
 	}
 
 #ifndef SWIG
-	void swap(tcp_acceptor& rhs) {
+	void swap(tcp_acceptor& rhs) noexcept {
 		using std::swap;
 		swap(m_listener, rhs.m_listener);
 		swap(m_event_handler, rhs.m_event_handler);
@@ -131,7 +131,7 @@ private:
 };
 
 #ifndef SWIG
-inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs) {
+inline void swap(tcp_acceptor& lhs, tcp_acceptor& rhs) noexcept {
 	lhs.swap(rhs);
 }
 #endif	// !SWIG
