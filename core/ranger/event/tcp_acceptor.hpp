@@ -112,12 +112,14 @@ public:
 
 #ifndef SWIG
 	void swap(tcp_acceptor& rhs) noexcept {
-		using std::swap;
-		swap(m_listener, rhs.m_listener);
-		swap(m_event_handler, rhs.m_event_handler);
+		if (this != &rhs) {
+			using std::swap;
+			swap(m_listener, rhs.m_listener);
+			swap(m_event_handler, rhs.m_event_handler);
 
-		reset_callbacks();
-		rhs.reset_callbacks();
+			reset_callbacks();
+			rhs.reset_callbacks();
+		}
 	}
 
 private:

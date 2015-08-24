@@ -206,15 +206,17 @@ public:
 
 #ifndef SWIG
 	void swap(tcp_connection& rhs) noexcept {
-		using std::swap;
-		swap(m_top_bev, rhs.m_top_bev);
-		swap(m_base_bev, rhs.m_base_bev);
-		swap(m_token_bucket, rhs.m_token_bucket);
-		swap(m_event_handler, rhs.m_event_handler);
-		swap(m_extra_data, rhs.m_extra_data);
+		if (this != &rhs) {
+			using std::swap;
+			swap(m_top_bev, rhs.m_top_bev);
+			swap(m_base_bev, rhs.m_base_bev);
+			swap(m_token_bucket, rhs.m_token_bucket);
+			swap(m_event_handler, rhs.m_event_handler);
+			swap(m_extra_data, rhs.m_extra_data);
 
-		reset_callbacks();
-		rhs.reset_callbacks();
+			reset_callbacks();
+			rhs.reset_callbacks();
+		}
 	}
 	
 private:

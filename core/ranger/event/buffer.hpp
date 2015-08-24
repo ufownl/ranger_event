@@ -79,9 +79,11 @@ public:
 
 #ifndef SWIG
 	void swap(buffer& rhs) noexcept {
-		using std::swap;
-		swap(m_buf, rhs.m_buf);
-		swap(m_flag, rhs.m_flag);
+		if (this != &rhs) {
+			using std::swap;
+			swap(m_buf, rhs.m_buf);
+			swap(m_flag, rhs.m_flag);
+		}
 	}
 
 #ifdef RANGER_INTERNAL
