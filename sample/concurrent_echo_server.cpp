@@ -155,12 +155,15 @@ public:
 	int run() {
 		std::vector<std::thread> threads;
 		threads.reserve(m_workers.size());
-		for (auto& w: m_workers)
+		for (auto& w: m_workers) {
 			threads.emplace_back(&worker::run, &w);
+		}
 
 		int ret = m_disp.run();
 
-		for (auto& t: threads) t.join();
+		for (auto& t: threads) {
+			t.join();
+		}
 
 		return ret;
 	}
