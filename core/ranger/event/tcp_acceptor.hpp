@@ -44,21 +44,20 @@ class tcp_connection;
 #endif	// !SWIG
 
 class tcp_acceptor {
-#ifndef SWIG
 public:
+#ifndef SWIG
 	using event_handler = std::function<bool(tcp_acceptor&, int)>;
 #endif	// !SWIG
 
-public:
 	tcp_acceptor(dispatcher& disp, const endpoint& ep, int backlog = -1) {
-		_bind(disp, ep, backlog);
+		bind(disp, ep, backlog);
 	}
 
 #ifndef SWIG
 	template <class T>
 	tcp_acceptor(dispatcher& disp, T&& handler, const endpoint& ep, int backlog = -1) {
 		m_event_handler = std::forward<T>(handler);
-		_bind(disp, ep, backlog);
+		bind(disp, ep, backlog);
 	}
 #endif	// !SWIG
 
@@ -71,7 +70,7 @@ public:
 	tcp_acceptor(tcp_acceptor&& rhs)
 		: m_listener(rhs.m_listener)
 		, m_event_handler(std::move(rhs.m_event_handler)) {
-		_reset_callbacks();
+		reset_callbacks();
 		rhs.m_listener = nullptr;
 	}
 
@@ -117,16 +116,14 @@ public:
 		swap(m_listener, rhs.m_listener);
 		swap(m_event_handler, rhs.m_event_handler);
 
-		_reset_callbacks();
-		rhs._reset_callbacks();
+		reset_callbacks();
+		rhs.reset_callbacks();
 	}
 
 private:
-	void _bind(dispatcher& disp, const endpoint& ep, int backlog);
+	void bind(dispatcher& disp, const endpoint& ep, int backlog);
+	void reset_callbacks();
 
-	void _reset_callbacks();
-
-private:
 	evconnlistener* m_listener;
 	event_handler m_event_handler;
 	void* m_extra_data = nullptr;

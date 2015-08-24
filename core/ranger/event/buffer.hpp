@@ -93,7 +93,7 @@ private:
 		// nop
 	}
 
-	evbuffer* _evbuffer() const {
+	evbuffer* backend() const {
 		return m_buf;
 	}
 

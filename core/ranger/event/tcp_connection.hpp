@@ -67,7 +67,6 @@ public:
 	};
 #endif	// !SWIG
 
-public:
 	tcp_connection()
 		: m_top_bev(nullptr)
 		, m_base_bev(nullptr) {
@@ -76,12 +75,12 @@ public:
 
 	tcp_connection(dispatcher& disp, const endpoint& ep)
 		: tcp_connection(disp) {
-			_connect(ep);
+		connect(ep);
 	}
 
 	tcp_connection(dispatcher& disp, const char* addr, int port)
 		: tcp_connection(disp) {
-		_connect(addr, port);
+		connect(addr, port);
 	}
 
 #ifndef SWIG
@@ -94,14 +93,14 @@ public:
 	tcp_connection(dispatcher& disp, T&& handler, const endpoint& ep)
 		: tcp_connection(disp) {
 		m_event_handler = std::forward<T>(handler);
-		_connect(ep);
+		connect(ep);
 	}
 
 	template <class T>
 	tcp_connection(dispatcher& disp, T&& handler, const char* addr, int port)
 		: tcp_connection(disp) {
 		m_event_handler = std::forward<T>(handler);
-		_connect(addr, port);
+		connect(addr, port);
 	}
 
 	template <class T>
@@ -123,7 +122,7 @@ public:
 		, m_token_bucket(std::move(rhs.m_token_bucket))
 		, m_event_handler(std::move(rhs.m_event_handler))
 		, m_extra_data(rhs.m_extra_data) {
-		_reset_callbacks();
+		reset_callbacks();
 		rhs.m_top_bev = nullptr;
 		rhs.m_base_bev = nullptr;
 		rhs.m_extra_data = nullptr;
@@ -147,13 +146,14 @@ public:
 	buffer write_buffer();
 
 #ifndef SWIG
-	template <class _read_rep, class _read_period, class _write_rep, class _write_period>
-	void set_timeouts(const std::chrono::duration<_read_rep, _read_period>& read_timeout, const std::chrono::duration<_write_rep, _write_period>& write_timeout) {
+	template <class ReadRep, class ReadPeriod, class WriteRep, class WritePeriod>
+	void set_timeouts(	const std::chrono::duration<ReadRep, ReadPeriod>& read_timeout,
+						const std::chrono::duration<WriteRep, WritePeriod>& write_timeout) {
 		auto read_sec = std::chrono::duration_cast<std::chrono::seconds>(read_timeout);
 		auto read_usec = std::chrono::duration_cast<std::chrono::microseconds>(read_timeout - read_sec);
 		auto write_sec = std::chrono::duration_cast<std::chrono::seconds>(write_timeout);
 		auto write_usec = std::chrono::duration_cast<std::chrono::microseconds>(write_timeout - write_sec);
-		_set_timeouts(read_sec.count(), read_usec.count(), write_sec.count(), write_usec.count());
+		set_timeouts_impl(read_sec.count(), read_usec.count(), write_sec.count(), write_usec.count());
 	}
 #endif	// !SWIG
 
@@ -177,8 +177,9 @@ public:
 #ifndef SWIG
 	template <class T, class... ARGS>
 	void append_filter(ARGS&&... args) {
-		if (m_top_bev)
-			_append_filter(std::unique_ptr<filter_handler>(new T(std::forward<ARGS>(args)...)));
+		if (m_top_bev) {
+			append_filter_impl(std::unique_ptr<filter_handler>(new T(std::forward<ARGS>(args)...)));
+		}
 	}
 
 	template <class T>
@@ -212,22 +213,21 @@ public:
 		swap(m_event_handler, rhs.m_event_handler);
 		swap(m_extra_data, rhs.m_extra_data);
 
-		_reset_callbacks();
-		rhs._reset_callbacks();
+		reset_callbacks();
+		rhs.reset_callbacks();
 	}
 	
 private:
 	explicit tcp_connection(bufferevent* bev);
 	explicit tcp_connection(dispatcher& disp);
 
-	void _connect(const endpoint& ep);
-	void _connect(const char* addr, int port);
+	void connect(const endpoint& ep);
+	void connect(const char* addr, int port);
 
-	void _set_timeouts(long read_sec, long read_usec, long write_sec, long write_usec);
-	void _append_filter(std::unique_ptr<filter_handler> filter);
-	void _reset_callbacks();
+	void set_timeouts_impl(long read_sec, long read_usec, long write_sec, long write_usec);
+	void append_filter_impl(std::unique_ptr<filter_handler> filter);
+	void reset_callbacks();
 
-private:
 	bufferevent* m_top_bev;
 	bufferevent* m_base_bev;
 	std::shared_ptr<const token_bucket_cfg> m_token_bucket;

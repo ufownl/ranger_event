@@ -43,12 +43,11 @@ class dispatcher;
 #endif	// !SWIG
 
 class signal {
-#ifndef SWIG
 public:
+#ifndef SWIG
 	using event_handler = std::function<void(signal&)>;
 #endif	// !SWIG
 
-public:
 	signal(dispatcher& disp, int sig);
 
 #ifndef SWIG
@@ -90,9 +89,8 @@ private:
 		rhs.m_event = nullptr;
 	}
 
-	void _init(event_base* base, int sig);
+	void init(event_base* base, int sig);
 
-private:
 	struct event* m_event;
 	event_handler m_event_handler;
 #endif	// !SWIG

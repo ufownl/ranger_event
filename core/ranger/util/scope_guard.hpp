@@ -43,8 +43,9 @@ public:
 	}
 
 	~scope_guard() {
-		if (!m_dismiss)
+		if (!m_dismiss) {
 			m_exit_handler();
+		}
 	}
 
 	scope_guard(const scope_guard&) = delete;

@@ -34,7 +34,7 @@
 namespace ranger { namespace event {
 
 signal::signal(dispatcher& disp, int sig) {
-	_init(disp._event_base(), sig);
+	init(disp.backend(), sig);
 }
 
 signal::~signal() {
@@ -61,10 +61,11 @@ void handle_signal(evutil_socket_t fd, short what, void* ctx) {
 
 }
 
-void signal::_init(event_base* base, int sig) {
+void signal::init(event_base* base, int sig) {
 	m_event = event_new(base, sig, EV_SIGNAL, handle_signal, this);
-	if (!m_event)
+	if (!m_event) {
 		throw std::runtime_error("event create failed.");
+	}
 }
 
 } }

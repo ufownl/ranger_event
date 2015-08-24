@@ -44,12 +44,11 @@ class dispatcher;
 #endif	// !SWIG
 
 class timer {
-#ifndef SWIG
 public:
+#ifndef SWIG
 	using event_handler = std::function<void(timer&)>;
 #endif	// !SWIG
 
-public:
 	explicit timer(dispatcher& disp);
 
 #ifndef SWIG
@@ -75,11 +74,11 @@ public:
 		return m_event_handler;
 	}
 
-	template <class _rep, class _period>
-	void active(const std::chrono::duration<_rep, _period>& dur) {
+	template <class Rep, class Period>
+	void active(const std::chrono::duration<Rep, Period>& dur) {
 		auto sec = std::chrono::duration_cast<std::chrono::seconds>(dur);
 		auto usec = std::chrono::duration_cast<std::chrono::microseconds>(dur - sec);
-		_active(sec.count(), usec.count());
+		active_impl(sec.count(), usec.count());
 	}
 #endif	// !SWIG
 
@@ -95,10 +94,9 @@ private:
 		rhs.m_event = nullptr;
 	}
 
-	void _init(event_base* base);
-	void _active(long sec, long usec);
+	void init(event_base* base);
+	void active_impl(long sec, long usec);
 
-private:
 	struct event* m_event;
 	event_handler m_event_handler;
 #endif	// !SWIG

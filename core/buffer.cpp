@@ -37,25 +37,29 @@ namespace ranger { namespace event {
 buffer::buffer()
 	: m_buf(evbuffer_new())
 	, m_flag(true) {
-	if (!m_buf)
+	if (!m_buf) {
 		throw std::runtime_error("evbuffer create failed.");
+	}
 }
 
 buffer::~buffer() {
-	if (m_buf && m_flag)
+	if (m_buf && m_flag) {
 		evbuffer_free(m_buf);
+	}
 }
 
 bool buffer::append(const void* src, size_t len) {
-	if (!m_buf)
+	if (!m_buf) {
 		return false;
+	}
 
 	return evbuffer_add(m_buf, src, len) == 0;
 }
 
 bool buffer::append(buffer& src) {
-	if (!m_buf)
+	if (!m_buf) {
 		return false;
+	}
 
 	return evbuffer_add_buffer(m_buf, src.m_buf) == 0;
 }
@@ -74,22 +78,25 @@ int buffer::printf(const char* fmt, ...) {
 }
 
 int buffer::vprintf(const char* fmt, va_list ap) {
-	if (!m_buf)
+	if (!m_buf) {
 		return -1;
+	}
 
 	return evbuffer_add_vprintf(m_buf, fmt, ap);
 }
 
 int buffer::remove(void* dst, size_t len) {
-	if (!m_buf)
+	if (!m_buf) {
 		return -1;
+	}
 
 	return evbuffer_remove(m_buf, dst, len);
 }
 
 int buffer::remove(buffer& dst, size_t len) {
-	if (!m_buf)
+	if (!m_buf) {
 		return -1;
+	}
 
 	return evbuffer_remove_buffer(m_buf, dst.m_buf, len);
 }

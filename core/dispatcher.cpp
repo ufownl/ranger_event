@@ -37,18 +37,21 @@ namespace ranger { namespace event {
 dispatcher::dispatcher() {
 	static std::once_flag flag;
 	std::call_once(flag, [] {
-		if (evthread_use_pthreads() == -1)
-		throw std::runtime_error("evthread_use_pthreads call failed.");
+		if (evthread_use_pthreads() == -1) {
+			throw std::runtime_error("evthread_use_pthreads call failed.");
+		}
 	});
 
 	m_base = event_base_new();
-	if (!m_base)
+	if (!m_base) {
 		throw std::runtime_error("event_base create faild.");
+	}
 }
 
 dispatcher::~dispatcher() {
-	if (m_base)
+	if (m_base) {
 		event_base_free(m_base);
+	}
 }
 
 int dispatcher::run() {
@@ -63,14 +66,15 @@ void dispatcher::kill() {
 	event_base_loopbreak(m_base);
 }
 
-void dispatcher::_exit(long sec, long usec) {
+void dispatcher::exit_impl(long sec, long usec) {
 	if (sec > 0 || usec > 0) {
 		timeval tv;
 		tv.tv_sec = sec;
 		tv.tv_usec = usec;
 		event_base_loopexit(m_base, &tv);
-	} else
+	} else {
 		event_base_loopexit(m_base, nullptr);
+	}
 }
 
 } }

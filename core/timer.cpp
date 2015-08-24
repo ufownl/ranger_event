@@ -34,12 +34,13 @@
 namespace ranger { namespace event {
 
 timer::timer(dispatcher& disp) {
-	_init(disp._event_base());
+	init(disp.backend());
 }
 
 timer::~timer() {
-	if (m_event)
+	if (m_event) {
 		event_free(m_event);
+	}
 }
 
 namespace {
@@ -47,21 +48,22 @@ namespace {
 void handle_expire(evutil_socket_t fd, short what, void* ctx) {
 	auto tmr = static_cast<timer*>(ctx);
 	auto& handler = tmr->get_event_handler();
-	if (handler)
+	if (handler) {
 		handler(*tmr);
+	}
 }
 
 }
 
-void timer::_init(event_base* base) {
+void timer::init(event_base* base) {
 	m_event = event_new(base, -1, 0, handle_expire, this);
-	if (!m_event)
+	if (!m_event) {
 		throw std::runtime_error("event create failed.");
+	}
 }
 
-void timer::_active(long sec, long usec) {
-	if (sec > 0 || usec > 0)
-	{
+void timer::active_impl(long sec, long usec) {
+	if (sec > 0 || usec > 0) {
 		timeval tv;
 		tv.tv_sec = sec;
 		tv.tv_usec = usec;

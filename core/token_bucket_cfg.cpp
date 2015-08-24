@@ -33,25 +33,33 @@
 namespace ranger { namespace event {
 
 token_bucket_cfg::~token_bucket_cfg() {
-	if (m_cfg)
+	if (m_cfg) {
 		ev_token_bucket_cfg_free(m_cfg);
+	}
 }
 
-token_bucket_cfg::token_bucket_cfg(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec) {
+token_bucket_cfg::token_bucket_cfg(	size_t read_rate, size_t read_burst,
+									size_t write_rate, size_t write_burst,
+									long sec, long usec) {
 	if (sec > 0 || usec > 0) {
 		timeval tv;
 		tv.tv_sec = sec;
 		tv.tv_usec = usec;
 
 		m_cfg = ev_token_bucket_cfg_new(read_rate, read_burst, write_rate, write_burst, &tv);
-	} else
+	} else {
 		m_cfg = ev_token_bucket_cfg_new(read_rate, read_burst, write_rate, write_burst, nullptr);
+	}
 
-	if (!m_cfg)
+	if (!m_cfg) {
 		throw std::runtime_error("ev_token_bucket_cfg_new call failed.");
+	}
 }
 
-std::shared_ptr<const token_bucket_cfg> token_bucket_cfg::_create(size_t read_rate, size_t read_burst, size_t write_rate, size_t write_burst, long sec, long usec) {
+std::shared_ptr<const token_bucket_cfg>
+token_bucket_cfg::create_impl(	size_t read_rate, size_t read_burst,
+								size_t write_rate, size_t write_burst,
+								long sec, long usec) {
 	return std::make_shared<const token_bucket_cfg>(read_rate, read_burst, write_rate, write_burst, sec, usec);
 }
 

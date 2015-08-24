@@ -43,44 +43,59 @@ void handle_accept(evconnlistener* listener, evutil_socket_t fd, sockaddr* addr,
 
 	auto acc = static_cast<tcp_acceptor*>(ctx);
 	auto& handler = acc->get_event_handler();
-	if (handler && handler(*acc, fd))
+	if (handler && handler(*acc, fd)) {
 		fd_guard.dismiss();
+	}
 }
 
 }
 
 tcp_acceptor::~tcp_acceptor() {
-	if (m_listener)
+	if (m_listener) {
 		evconnlistener_free(m_listener);
+	}
 }
 
 int tcp_acceptor::file_descriptor() const {
-	if (!m_listener)
+	if (!m_listener) {
 		return -1;
+	}
 
 	return evconnlistener_get_fd(m_listener);
 }
 
 endpoint tcp_acceptor::local_endpoint() const {
 	evutil_socket_t fd = file_descriptor();
-	if (fd == -1)
+	if (fd == -1) {
 		return endpoint();
+	}
 
 	sockaddr_in sin;
 	socklen_t len = sizeof(sin);
-	getsockname(fd, (sockaddr*)&sin, &len);
+	getsockname(fd, reinterpret_cast<sockaddr*>(&sin), &len);
 	return endpoint(sin);
 }
 
-void tcp_acceptor::_bind(dispatcher& disp, const endpoint& ep, int backlog) {
-	m_listener = evconnlistener_new_bind(disp._event_base(), handle_accept, this, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE, backlog, (sockaddr*)&ep._sockaddr_in(), sizeof(sockaddr_in));
-	if (!m_listener)
+void tcp_acceptor::bind(dispatcher& disp, const endpoint& ep, int backlog) {
+	m_listener =
+		evconnlistener_new_bind(
+			disp.backend(),
+			handle_accept,
+			this,
+			LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE,
+			backlog,
+			reinterpret_cast<const sockaddr*>(&ep.backend()),
+			sizeof(sockaddr_in)
+		);
+	if (!m_listener) {
 		throw std::runtime_error("evconnlistener create failed.");
+	}
 }
 
-void tcp_acceptor::_reset_callbacks() {
-	if (m_listener)
+void tcp_acceptor::reset_callbacks() {
+	if (m_listener) {
 		evconnlistener_set_cb(m_listener, handle_accept, this);
+	}
 }
 
 } }

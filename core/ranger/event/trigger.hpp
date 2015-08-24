@@ -43,12 +43,11 @@ class dispatcher;
 #endif	// !SWIG
 
 class trigger {
-#ifndef SWIG
 public:
+#ifndef SWIG
 	using event_handler = std::function<void(trigger&)>;
 #endif	// !SWIG
 
-public:
 	explicit trigger(dispatcher& disp);
 
 #ifndef SWIG
@@ -88,9 +87,8 @@ private:
 		rhs.m_event = nullptr;
 	}
 
-	void _init(event_base* base);
+	void init(event_base* base);
 
-private:
 	struct event* m_event;
 	event_handler m_event_handler;
 #endif	// !SWIG

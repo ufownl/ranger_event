@@ -68,7 +68,7 @@ private:
 		// nop
 	}
 
-	const sockaddr_in& _sockaddr_in() const {
+	const sockaddr_in& backend() const {
 		return m_sin;
 	}
 

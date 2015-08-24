@@ -34,17 +34,19 @@
 namespace ranger { namespace event {
 
 trigger::trigger(dispatcher& disp) {
-	_init(disp._event_base());
+	init(disp.backend());
 }
 
 trigger::~trigger() {
-	if (m_event)
+	if (m_event) {
 		event_free(m_event);
+	}
 }
 
 void trigger::active() {
-	if (m_event)
+	if (m_event) {
 		event_active(m_event, EV_WRITE, 0);
+	}
 }
 
 namespace {
@@ -52,16 +54,18 @@ namespace {
 	void handle_touch(evutil_socket_t fd, short what, void* ctx) {
 		auto tr = static_cast<trigger*>(ctx);
 		auto& handler = tr->get_event_handler();
-		if (handler)
+		if (handler) {
 			handler(*tr);
+		}
 	}
 
 }
 
-void trigger::_init(event_base* base) {
+void trigger::init(event_base* base) {
 	m_event = event_new(base, -1, 0, handle_touch, this);
-	if (!m_event)
+	if (!m_event) {
 		throw std::runtime_error("event create failed.");
+	}
 }
 
 } }
