@@ -76,8 +76,8 @@ public:
 
 	tcp_acceptor& operator = (tcp_acceptor&& rhs) noexcept {
 		if (this != &rhs) {
-			tcp_acceptor acc = std::move(rhs);
-			swap(acc);
+			auto tmp = std::move(rhs);
+			swap(tmp);
 		}
 
 		return *this;

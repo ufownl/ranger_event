@@ -130,8 +130,8 @@ public:
 
 	tcp_connection& operator = (tcp_connection&& rhs) noexcept {
 		if (this != &rhs) {
-			tcp_connection conn = std::move(rhs);
-			swap(conn);
+			auto tmp = std::move(rhs);
+			swap(tmp);
 		}
 
 		return *this;

@@ -53,8 +53,8 @@ public:
 
 	buffer& operator = (buffer&& rhs) noexcept {
 		if (this != &rhs) {
-			buffer buf = std::move(rhs);
-			swap(buf);
+			auto tmp = std::move(rhs);
+			swap(tmp);
 		}
 
 		return *this;
