@@ -1,5 +1,5 @@
-require "lua_ranger_event"
-event = lua_ranger_event
+require "ranger_lua_event"
+event = ranger_lua_event
 
 function make_size_filter(size)
 	return function(src, dst)

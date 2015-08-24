@@ -1,0 +1,18 @@
+INCLUDE(${SWIG_USE_FILE})
+INCLUDE_DIRECTORIES(
+	${LUA_INCLUDE_DIR}
+	${EVENT_SOURCE_DIR}/core
+)
+
+SET_SOURCE_FILES_PROPERTIES(
+	ranger_lua_event.i
+	PROPERTIES
+		CPLUSPLUS ON
+		SWIG_FLAGS "-Wall"
+)
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRANGER_SWIG_INTERNAL")
+
+SWIG_ADD_MODULE(ranger_lua_event lua ranger_lua_event.i)
+SWIG_LINK_LIBRARIES(ranger_lua_event ranger_event ${LUA_LIBRARIES})
+ADD_DEPENDENCIES(ranger_lua_event ranger_event)
