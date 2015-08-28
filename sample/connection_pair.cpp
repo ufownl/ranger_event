@@ -13,9 +13,9 @@ public:
 			if (what == ranger::event::tcp_connection::event_code::read) {
 				if (m_cnt-- > 0) {
 					std::vector<char> v(conn.read_buffer().size());
-					conn.read_buffer().remove(&v.front(), v.size());
+					conn.read_buffer().remove(v.data(), v.size());
 					for (auto ch: v) std::cout << ch;
-					conn.write_buffer().append(&v.front(), v.size());
+					conn.write_buffer().append(v.data(), v.size());
 				} else {
 					m_conn_pair.first.close();
 					m_conn_pair.second.close();

@@ -24,8 +24,8 @@ public:
 		}
 
 		std::vector<char> v(n * m_size);
-		src.remove(&v.front(), v.size());
-		dst.append(&v.front(), v.size());
+		src.remove(v.data(), v.size());
+		dst.append(v.data(), v.size());
 		return true;
 	}
 
@@ -46,10 +46,10 @@ private:
 
 	void transform(ranger::event::buffer& src, ranger::event::buffer& dst) {
 		std::vector<char> v(src.size());
-		src.remove(&v.front(), v.size());
+		src.remove(v.data(), v.size());
 		for (auto& ch: v)
 			if ('a' <= ch && ch < 'z') ++ch;
-		dst.append(&v.front(), v.size());
+		dst.append(v.data(), v.size());
 	}
 
 	bool handle_input(ranger::event::buffer&& src, ranger::event::buffer&& dst) final {
@@ -108,9 +108,9 @@ public:
 private:
 	void handle_read(ranger::event::tcp_connection& conn, ranger::event::buffer&& buf) {
 		std::vector<char> v(buf.size());
-		buf.remove(&v.front(), v.size());
+		buf.remove(v.data(), v.size());
 		for (auto ch: v) std::cout << ch << std::flush;
-		conn.write_buffer().append(&v.front(), v.size());
+		conn.write_buffer().append(v.data(), v.size());
 	}
 
 	void handle_timeout(ranger::event::tcp_connection& conn) {
